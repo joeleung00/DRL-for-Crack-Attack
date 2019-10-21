@@ -8,18 +8,25 @@ ORANGE = 3
 PURPLE = 4
 MARKED = 12
 
+def print_board(board):
+    for i in range(12):
+        for j in range(6):
+            print(board[i][j], end = " ")
+        print()
+
+
 class Game:
     
     def __init__(self):
         self.gameboard = GameBoard()
-        #self.gameboard.init_board()
+        self.gameboard.init_board()
 
     def wait_input(self):
         self.gameboard.print_board()
         while True:
             x = input()
             y = input()
-            self.gameboard.swap(int(x), int(y))
+            self.gameboard.proceed_next_state(int(x), int(y))
             self.gameboard.print_board()
 
     def test_game(self):
@@ -27,9 +34,25 @@ class Game:
         self.gameboard.print_board()
         self.gameboard.gravity()
         print()
-        self.gameboard.print_board()            
+        self.gameboard.print_board() 
 
+    def test_elimination(self):
+        self.gameboard.test_board()
+        self.gameboard.print_board()
+        tmp = self.gameboard.elimination()
+        print("Number of elimination is " + str(tmp))
+        self.gameboard.print_board()    
 
+    def test_marksub(self):
+        self.gameboard.test_board()
+        marked_board = [[0 for j in range(6)] for i in range(12)]
+        #print_board(marked_board)
+        self.gameboard.mark_sub(0, 1, 3, marked_board, True)
+        self.gameboard.mark_sub(2, 1, 4, marked_board, True)
+        self.gameboard.mark_sub(0, 4, 6, marked_board, False)
+        self.gameboard.mark_sub(2, 4, 7, marked_board, False)
+        print_board(marked_board)
+        
 class GameBoard:
     def __init__(self):
         self.score = 0
@@ -99,10 +122,24 @@ class GameBoard:
                          cur_row += 1
 
     def test_board(self):
-        self.board[4][3] = 1
-        self.board[3][2] = 2
-        self.board[6][3] = 3
-        self.board[5][2] = 2
+        #case 1
+        for i in range(1,4):
+            self.board[0][i] = BLUE
+        # case 2
+        for i in range(1, 5):
+            self.board[2][i] = BLUE
+        #case 3
+        for i in range(4, 7):
+            self.board[i][0] = BLUE
+        #case 4
+        for i in range(4, 8):
+            self.board[i][2] = BLUE
+        #case 5
+        for i in range(3, 6):
+            self.board[9][i] = BLUE
+        for j in range(9, 12):
+            self.board[j][4] = BLUE 
+        self.board[8][4] = BLUE    
 
     def mark_sub(self, i, start, end, marked_board, row_major):
         
@@ -133,7 +170,7 @@ class GameBoard:
                         if count >= 3:
                             self.mark_sub(row, col - count + 1, col, marked_board, True)
                         count = 1
-                                
+                        cur_color = self.board[row][col + 1]
 
         # column major scan:
         for col in range(self.column_dim):
@@ -150,6 +187,7 @@ class GameBoard:
                         if count >= 3:
                             self.mark_sub(col, row - count + 1, row, marked_board, False)
                         count = 1
+                        cur_color = self.board[row + 1][col]
 
 
 
@@ -157,15 +195,28 @@ class GameBoard:
         count = 0
         marked_board = [[0 for i in range(self.column_dim)] for j in range(self.row_dim)]
         self.mark(marked_board)
+        
+        
+
         for row in range(self.row_dim):
             for col in range(self.column_dim):
-                if marked_board[row][col] = MARKED:
+                if marked_board[row][col] == MARKED:
                     self.board[row][col] = EMPTY
                     count += 1
         return count
+
+    def proceed_next_state(self, row, col):
+        self.swap(row, col)
+        self.gravity()
+        while (True):
+            num = self.elimination()
+            self.gravity()
+            if (num == 0):
+                break
+
                     
 
 
 
 game = Game()
-game.test_game()
+game.wait_input()
