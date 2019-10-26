@@ -10,9 +10,8 @@ spec.loader.exec_module(game)
 
 
 
-MAX_ROUND_NUMBER = 20
+MAX_ROUND_NUMBER = 15
 #AVAILABLE_CHOICES = []
-gameboard = game.GameBoard()
 
 class Node:
     def __init__(self, state, parent = None):
@@ -32,9 +31,9 @@ class Node:
 
 class State:
     def __init__(self, board, round_index, cumulative_choices, num_available_choices = 0, action_reward = 0):
-        self.current_board = board
+        self.current_board = deepcopy(board)
         self.current_round_index = round_index
-        self.cumulative_choices = cumulative_choices
+        self.cumulative_choices = deepcopy(cumulative_choices)
         self.num_available_choices = num_available_choices
         if len(cumulative_choices) != 0:
             self.choice_id = self.get_choice_id(cumulative_choices[-1][0], cumulative_choices[-1][1])
@@ -54,32 +53,32 @@ class State:
     def get_choice_id(self, row, col):
         return row * 10 + col
 
-    def compute_reward(self):
-        return gameboard.score
+    def compute_reward(self, simulation_board):
+        return simulation_board.score
 
     # def set_num_available_choices(self):
     #     gameboard.board = self.board
     #     available_choices = gameboard.get_available_choices()
     #     self.num_available_choices = len(available_choices)
 
-    def get_next_state_with_random_choice(self, exclude=None):
+    def get_next_state_with_random_choice(self, simulation_board, exclude=None):
         ## AVAILABLE_CHOICES is a double integer tupple list
-        available_choices = gameboard.get_available_choices()
-        if len(available_choices) == 0:
-            print(gameboard.board)
+        available_choices = simulation_board.get_available_choices()
         random_choice = random.choice(available_choices)
 
         if exclude != None:
             while self.get_choice_id(random_choice[0], random_choice[1]) in exclude:
                 random_choice = random.choice(available_choices)
 
-
-        action_reward = gameboard.proceed_next_state(random_choice[0], random_choice[1])
-        available_choices = gameboard.get_available_choices()
-        next_state =  State(deepcopy(gameboard.board), self.current_round_index + 1,
+        action_reward = simulation_board.proceed_next_state(random_choice[0], random_choice[1])
+        available_choices = simulation_board.get_available_choices()
+        next_state =  State(simulation_board.board, self.current_round_index + 1,
             self.cumulative_choices + [random_choice], len(available_choices), action_reward)
 
         return next_state
+
+    def get_choice(self):
+        return self.cumulative_choices[-1]
 
 
 def tree_policy(node):
@@ -109,17 +108,17 @@ def default_policy(node):
 
     # Get the state of the game
     current_state = node.state
+    #print(current_state.current_board)
 
-    gameboard.board = current_state.current_board.copy()
-    gameboard.reset_score()
+    simulation_board = game.GameBoard(current_state.current_board)
     # Run until the game over
     while current_state.is_terminal() == False:
 
         # Pick one random action to play and get next state
+        current_state = current_state.get_next_state_with_random_choice(simulation_board)
 
-        current_state = current_state.get_next_state_with_random_choice()
-
-    final_state_reward = current_state.compute_reward()
+    final_state_reward = current_state.compute_reward(simulation_board)
+    #print("reward: " + str(final_state_reward))
     return final_state_reward
 
 
@@ -134,10 +133,9 @@ def expand(node):
     # tried_sub_node_states = [
     #   sub_node.state for sub_node in node.child
     # ]
-    gameboard.board = deepcopy(node.state.current_board)
-    gameboard.reset_score()
+    simulation_board = game.GameBoard(node.state.current_board)
 
-    new_state = node.state.get_next_state_with_random_choice(exclude=child_node_state_set)
+    new_state = node.state.get_next_state_with_random_choice(simulation_board, exclude=child_node_state_set)
 
     # Check until get the new state which has the different action from others
     # while new_state in tried_sub_node_states:
@@ -201,7 +199,7 @@ def backup(node, reward):
 
 def monte_carlo_tree_search(node):
 
-    computation_budget = 10
+    computation_budget = 70
 
     # Run as much as possible under the computation budget
     for i in range(computation_budget):
@@ -209,27 +207,51 @@ def monte_carlo_tree_search(node):
         #print(node.state.current_board)
         # 1. Find the best node to expand
         expand_node = tree_policy(node)
-
         # 2. Random run to add node and get reward
         reward = default_policy(expand_node)
-        print(node.quality_value)
         # 3. Update all passing nodes with reward
+
         backup(expand_node, reward)
 
     # N. Get the best next node
     best_next_node = best_child(node, False)
+    print("my quality_value :" + str(node.quality_value))
 
     return best_next_node
 
-if __name__ == "__main__":
-    play = game.Game()
+def get_best_child(node):
+    best_quality_value = 0
+    best_child = None
+    for child in node.child:
+        if child.quality_value > best_quality_value:
+            best_quality_value = child.quality_value
+            best_child = child
+    return best_child
 
-    num_available_choices = len(play.gameboard.get_available_choices())
-    init_state = State(play.gameboard.board.copy(), 0, [], num_available_choices)
+if __name__ == "__main__":
+    gameplay = game.Game()
+
+    num_available_choices = len(gameplay.gameboard.get_available_choices())
+    init_state = State(gameplay.gameboard.board, 0, [], num_available_choices)
     root_node = Node(state=init_state)
     current_node = root_node
 
-    play.gameboard.print_board()
-    for _ in range(5):
+    gameplay.gameboard.print_board()
+
+
+    # monte_carlo_tree_search(current_node)
+    # print(current_node.quality_value)
+    # child = get_best_child(current_node)
+    # while  child != None:
+    #     print("my quality_value :" + str(child.quality_value))
+    #     choice = child.state.get_choice()
+    #     print("You have choosen : " + str(choice[0]) + " " + str(choice[1]))
+    #     gameplay.input_pos(choice[0], choice[1])
+    #     child = get_best_child(child)
+
+
+    for _ in range(15):
         current_node = monte_carlo_tree_search(current_node)
-        game.print_board(current_node.state.current_board)
+        choice = current_node.state.get_choice()
+        print("You have choosen : " + str(choice[0]) + " " + str(choice[1]))
+        gameplay.input_pos(choice[0], choice[1])

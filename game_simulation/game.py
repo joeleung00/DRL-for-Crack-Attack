@@ -1,5 +1,5 @@
 import random
-
+from copy import copy, deepcopy
 EMPTY = -1
 BLUE = 0
 YELLOW = 1
@@ -29,6 +29,10 @@ class Game:
             self.gameboard.proceed_next_state(int(x), int(y))
             self.gameboard.print_board()
 
+    def input_pos(self, x, y):
+        self.gameboard.proceed_next_state(int(x), int(y))
+        self.gameboard.print_board()
+
     def test_game(self):
         self.gameboard.test_board()
         self.gameboard.print_board()
@@ -55,21 +59,27 @@ class Game:
         self.gameboard.mark_sub(2, 4, 7, marked_board, False)
         print_board(marked_board)
 
+    def random_player(self):
+        available_choices = self.gameboard.get_available_choices()
+        return random.choice(available_choices)
+
+
+
 class GameBoard:
     def __init__(self, board = None):
         self.score = 0
         # self.row_dim = 12
         # self.column_dim = 6
         # self.blocks_init_height = 8
-        self.row_dim = 4
-        self.column_dim = 3
-        self.blocks_init_height = 3
+        self.row_dim = 12
+        self.column_dim = 6
+        self.blocks_init_height = 8
         # self.num_of_color = 5
-        self.num_of_color = 3
+        self.num_of_color = 5
         if board == None:
             self.board = [[-1 for i in range(self.column_dim)] for j in range(self.row_dim)]
         else:
-            self.board = board
+            self.board = deepcopy(board)
 
     def print_board(self):
         for i in range(self.row_dim):
@@ -249,4 +259,7 @@ class GameBoard:
 
 if __name__ == "__main__":
     game = Game()
-    game.wait_input()
+    #game.wait_input()
+    for _ in range(20):
+        choice = game.random_player()
+        game.input_pos(choice[0], choice[1])
