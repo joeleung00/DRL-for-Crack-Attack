@@ -1,5 +1,6 @@
 import random
 from copy import copy, deepcopy
+import math
 EMPTY = -1
 BLUE = 0
 YELLOW = 1
@@ -66,8 +67,8 @@ class Game:
 
 
 class GameBoard:
-    def __init__(self, board = None):
-        self.score = 0
+    def __init__(self, board = None, simulation = False):
+        self.score = 0.0
         # self.row_dim = 12
         # self.column_dim = 6
         # self.blocks_init_height = 8
@@ -80,6 +81,8 @@ class GameBoard:
             self.board = [[-1 for i in range(self.column_dim)] for j in range(self.row_dim)]
         else:
             self.board = deepcopy(board)
+        self.round_index = 0
+        self.simulation = simulation
 
     def print_board(self):
         for i in range(self.row_dim):
@@ -243,7 +246,11 @@ class GameBoard:
             if (score_gain == 0):
                 break
 
-        self.score += total_score_gain
+        if self.simulation == True:
+            self.score += total_score_gain * math.exp(-0.1 * self.round_index)
+        else:
+            self.score += total_score_gain
+        self.round_index += 1
         return total_score_gain
 
     def get_available_choices(self):
@@ -259,7 +266,7 @@ class GameBoard:
 
 if __name__ == "__main__":
     game = Game()
-    #game.wait_input()
-    for _ in range(20):
-        choice = game.random_player()
-        game.input_pos(choice[0], choice[1])
+    game.wait_input()
+    # for _ in range(5):
+    #     choice = game.random_player()
+    #     game.input_pos(choice[0], choice[1])

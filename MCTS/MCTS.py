@@ -10,7 +10,7 @@ spec.loader.exec_module(game)
 
 
 
-MAX_ROUND_NUMBER = 15
+MAX_ROUND_NUMBER = 20
 #AVAILABLE_CHOICES = []
 
 class Node:
@@ -110,7 +110,7 @@ def default_policy(node):
     current_state = node.state
     #print(current_state.current_board)
 
-    simulation_board = game.GameBoard(current_state.current_board)
+    simulation_board = game.GameBoard(current_state.current_board, simulation = True)
     # Run until the game over
     while current_state.is_terminal() == False:
 
@@ -133,7 +133,7 @@ def expand(node):
     # tried_sub_node_states = [
     #   sub_node.state for sub_node in node.child
     # ]
-    simulation_board = game.GameBoard(node.state.current_board)
+    simulation_board = game.GameBoard(node.state.current_board, simulation = True)
 
     new_state = node.state.get_next_state_with_random_choice(simulation_board, exclude=child_node_state_set)
 
@@ -199,7 +199,7 @@ def backup(node, reward):
 
 def monte_carlo_tree_search(node):
 
-    computation_budget = 70
+    computation_budget = 500
 
     # Run as much as possible under the computation budget
     for i in range(computation_budget):
@@ -250,7 +250,7 @@ if __name__ == "__main__":
     #     child = get_best_child(child)
 
 
-    for _ in range(15):
+    for _ in range(20):
         current_node = monte_carlo_tree_search(current_node)
         choice = current_node.state.get_choice()
         print("You have choosen : " + str(choice[0]) + " " + str(choice[1]))
