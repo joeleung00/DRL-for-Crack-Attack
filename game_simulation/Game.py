@@ -80,8 +80,9 @@ class Game:
                     if event.key == K_ESCAPE:
                         exit()
 
-            if self.gameboard.score > 10:
+            if self.gameboard.score > 10 and self.stable_mode == True:
                 self.stable_mode = False
+                offset += 1
 
 
             if not self.stable_mode:
@@ -120,5 +121,3 @@ class Game:
 if __name__ == "__main__":
     game = Game()
     game.run()
-
-
