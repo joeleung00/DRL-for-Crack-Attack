@@ -2,16 +2,13 @@ import random
 import sys
 import math
 from copy import copy, deepcopy
-import importlib.util
-
-spec = importlib.util.spec_from_file_location("game", "../game_simulation/game.py")
-game = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(game)
-
+import sys
+sys.path.insert(1, '../game_simulation')
+from GameBoard import GameBoard
+from GameCLI import Game
 
 
 MAX_ROUND_NUMBER = 20
-#AVAILABLE_CHOICES = []
 
 class Node:
     def __init__(self, state, parent = None):
@@ -110,7 +107,7 @@ def default_policy(node):
     current_state = node.state
     #print(current_state.current_board)
 
-    simulation_board = game.GameBoard(current_state.current_board, simulation = True)
+    simulation_board = GameBoard(current_state.current_board, simulation = True)
     # Run until the game over
     while current_state.is_terminal() == False:
 
@@ -133,7 +130,7 @@ def expand(node):
     # tried_sub_node_states = [
     #   sub_node.state for sub_node in node.child
     # ]
-    simulation_board = game.GameBoard(node.state.current_board, simulation = True)
+    simulation_board = GameBoard(node.state.current_board, simulation = True)
 
     new_state = node.state.get_next_state_with_random_choice(simulation_board, exclude=child_node_state_set)
 
@@ -229,7 +226,7 @@ def get_best_child(node):
     return best_child
 
 if __name__ == "__main__":
-    gameplay = game.Game()
+    gameplay = Game()
 
     num_available_choices = len(gameplay.gameboard.get_available_choices())
     init_state = State(gameplay.gameboard.board, 0, [], num_available_choices)

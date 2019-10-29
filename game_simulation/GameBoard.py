@@ -9,61 +9,6 @@ ORANGE = 3
 PURPLE = 4
 MARKED = 12
 
-def print_board(board):
-    for i in range(4):
-        for j in range(3):
-            print(board[i][j], end = " ")
-        print()
-
-
-class Game:
-
-    def __init__(self):
-        self.gameboard = GameBoard()
-        self.gameboard.init_board()
-
-    def wait_input(self):
-        self.gameboard.print_board()
-        while True:
-            pos = input()
-            x, y = pos.split(' ')
-            self.gameboard.proceed_next_state(int(x), int(y))
-            self.gameboard.print_board()
-
-    def input_pos(self, x, y):
-        self.gameboard.proceed_next_state(int(x), int(y))
-        self.gameboard.print_board()
-
-    def test_game(self):
-        self.gameboard.test_board()
-        self.gameboard.print_board()
-        print()
-        pos = input()
-        x, y = pos.split(' ')
-        self.gameboard.proceed_next_state(int(x), int(y))
-        self.gameboard.print_board()
-
-    def test_elimination(self):
-        self.gameboard.test_board()
-        self.gameboard.print_board()
-        tmp = self.gameboard.elimination()
-        print("Number of elimination is " + str(tmp))
-        self.gameboard.print_board()
-
-    def test_marksub(self):
-        self.gameboard.test_board()
-        marked_board = [[0 for j in range(6)] for i in range(12)]
-        #print_board(marked_board)
-        self.gameboard.mark_sub(0, 1, 3, marked_board, True)
-        self.gameboard.mark_sub(2, 1, 4, marked_board, True)
-        self.gameboard.mark_sub(0, 4, 6, marked_board, False)
-        self.gameboard.mark_sub(2, 4, 7, marked_board, False)
-        print_board(marked_board)
-
-    def random_player(self):
-        available_choices = self.gameboard.get_available_choices()
-        return random.choice(available_choices)
-
 
 
 class GameBoard:
@@ -79,10 +24,14 @@ class GameBoard:
         self.num_of_color = 5
         if board == None:
             self.board = [[-1 for i in range(self.column_dim)] for j in range(self.row_dim)]
+            self.init_board()
         else:
             self.board = deepcopy(board)
         self.round_index = 0
         self.simulation = simulation
+        self.new_row = None
+        self.get_new_row()
+        self.empty_row = [-1] * self.column_dim
 
     def print_board(self):
         for i in range(self.row_dim):
@@ -235,8 +184,9 @@ class GameBoard:
                     count += 1
         return count
 
-    def proceed_next_state(self, row, col):
-        tmp = self.swap(row, col)
+    def proceed_next_state(self, row = None, col = None):
+        if row != None and col != None:
+            self.swap(row, col)
         self.gravity()
         total_score_gain = 0
         while (True):
@@ -261,12 +211,13 @@ class GameBoard:
                     choices.append((row, col))
         return choices
 
-    def reset_score(self):
-        self.score = 0
-
-if __name__ == "__main__":
-    game = Game()
-    game.wait_input()
-    # for _ in range(5):
-    #     choice = game.random_player()
-    #     game.input_pos(choice[0], choice[1])
+    def get_new_row(self):
+        row=[None]*self.column_dim
+        for i in range(self.column_dim):
+            row[i] = random.randint(0, self.num_of_color - 1)
+            while(self.board[self.row_dim - 1][i]==row[i] and self.board[self.row_dim - 2][i]==row[i]):
+                row[i] = random.randint(0, self.num_of_color - 1)
+            if(i>1):
+                while(row[i]==row[i-1] and row[i-1]==row[i-2]):
+                    row[i] = random.randint(0, self.num_of_color - 1)
+        self.new_row = row
