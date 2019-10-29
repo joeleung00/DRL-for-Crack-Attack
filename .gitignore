@@ -1,2 +1,5 @@
 game_simulation/.vscode
-game_simulation/__pycache__/game.cpython-35.pyc
+game_simulation/__pycache__/
+.DS_Store
+game_simulation/.DS_Store
+MCTS/.DS_Store
