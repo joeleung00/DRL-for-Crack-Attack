@@ -32,6 +32,7 @@ class GameBoard:
         self.new_row = None
         self.get_new_row()
         self.empty_row = [-1] * self.column_dim
+        self.cursor_pos = [8, 2]
 
     def print_board(self):
         for i in range(self.row_dim):

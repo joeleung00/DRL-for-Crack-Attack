@@ -3,3 +3,4 @@ game_simulation/__pycache__/*
 .DS_Store
 game_simulation/.DS_Store
 MTCS/.DS_Store
+MCTS/__pycache__/
