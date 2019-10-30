@@ -4,8 +4,12 @@ import time
 from pygame.locals import *
 from sys import exit
 
-from GameBoard import GameBoard
+#from joblib import Parallel, delayed
+import sys
+sys.path.insert(1, '../MCTS')
 
+from GameBoard import GameBoard
+from MCTS import State,Node,monte_carlo_tree_search
 
 cell_size = 30
 colors = [
@@ -28,7 +32,7 @@ class Game:
         self.testFont = pygame.font.Font('freesansbold.ttf', 20)
         self.screen = pygame.display.set_mode(((self.gameboard.column_dim+5)*cell_size, self.gameboard.row_dim*cell_size), 0, 32)
 
-    def draw_screen(self,board,offset):
+    def draw_screen(self,board,offset,cursor_pos):
         self.screen.fill(pygame.Color(0,0,0))
 
         for y, row in enumerate(board):
@@ -38,8 +42,12 @@ class Game:
         for x in range(self.gameboard.column_dim):
             pygame.draw.rect(self.screen, colors[self.gameboard.new_row[x]],pygame.Rect(x * cell_size,self.gameboard.row_dim*cell_size-offset, cell_size, offset), 0)
 
+        pygame.draw.rect(self.screen, pygame.Color(255,255,255),pygame.Rect(cursor_pos[1] * cell_size, + cursor_pos[0] * cell_size - offset, cell_size*2, cell_size), 5)
+
         scoreObj = self.testFont.render("Score: %d" % self.gameboard.score, False, (255, 255, 255))
         self.screen.blit(scoreObj, (200, 200))
+
+
 
     def insert_row_to_board(self):
 
@@ -63,6 +71,18 @@ class Game:
         else:
             return offset % cell_size
 
+    def get_cursor_pos(self,cursor_pos,keys):
+        pygame.time.wait(70)
+        if(keys[K_w] and cursor_pos[0] != 0):
+            cursor_pos[0] = cursor_pos[0] - 1
+        elif(keys[K_s] and cursor_pos[0] != self.gameboard.row_dim-1):
+            cursor_pos[0] = cursor_pos[0] + 1
+        elif(keys[K_d] and cursor_pos[1] != self.gameboard.column_dim-2):
+            cursor_pos[1] = cursor_pos[1] + 1
+        elif (keys[K_a] and cursor_pos[1] != 0):
+            cursor_pos[1] = cursor_pos[1] - 1
+
+        return cursor_pos
 
     def run(self):
         #stable means the board does not move
@@ -72,6 +92,7 @@ class Game:
         gameover = False
         frame_index = 0
         clock = pygame.time.Clock()
+
         while not gameover:
             for event in pygame.event.get():
                 if event.type == QUIT:
@@ -95,14 +116,15 @@ class Game:
                     self.gameboard.get_new_row()
                     offset += 1
 
-            pressed = pygame.mouse.get_pressed()
+            pressed_keys = pygame.key.get_pressed()
 
-            self.draw_screen(self.gameboard.board, offset)
+            self.get_cursor_pos(self.gameboard.cursor_pos,pressed_keys)
 
-            if(pressed[0]):
-                mouse_x,mouse_y=pygame.mouse.get_pos()
-                #pygame.display.set_caption(str(mouse_x)+" "+str(mouse_y)+" "+str(int(mouse_x/30))+" "+str(int(mouse_y/30)))
-                self.gameboard.proceed_next_state(int((mouse_y + offset) / cell_size),int(mouse_x/cell_size))
+            self.draw_screen(self.gameboard.board, offset,self.gameboard.cursor_pos)
+
+
+            if(pressed_keys[K_SPACE]):
+                self.gameboard.proceed_next_state(self.gameboard.cursor_pos[0], self.gameboard.cursor_pos[1])
                 pygame.time.wait(200)
 
             if(self.gameboard.board[0]!=self.gameboard.empty_row):
