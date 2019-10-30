@@ -7,6 +7,7 @@ YELLOW = 1
 GREEN = 2
 ORANGE = 3
 PURPLE = 4
+RED = 5
 MARKED = 12
 
 
@@ -14,13 +15,9 @@ MARKED = 12
 class GameBoard:
     def __init__(self, board = None, simulation = False):
         self.score = 0.0
-        # self.row_dim = 12
-        # self.column_dim = 6
-        # self.blocks_init_height = 8
         self.row_dim = 12
         self.column_dim = 6
         self.blocks_init_height = 8
-        # self.num_of_color = 5
         self.num_of_color = 5
         if board == None:
             self.board = [[-1 for i in range(self.column_dim)] for j in range(self.row_dim)]
@@ -197,7 +194,7 @@ class GameBoard:
                 break
 
         if self.simulation == True:
-            self.score += total_score_gain * math.exp(-0.1 * self.round_index)
+            self.score += total_score_gain * math.exp(-0.4 * self.round_index)
         else:
             self.score += total_score_gain
         self.round_index += 1

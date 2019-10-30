@@ -6,9 +6,11 @@ import sys
 sys.path.insert(1, '../game_simulation')
 from GameBoard import GameBoard
 from GameCLI import Game
+from Measurement import Timer
 
-
-MAX_ROUND_NUMBER = 20
+MAX_SIMULATION_DEPTH = 20
+ROUND_NUMER = 15
+COMPUTATIONAL_BUDGET = 100
 
 class Node:
     def __init__(self, state, parent = None):
@@ -36,11 +38,11 @@ class State:
             self.choice_id = self.get_choice_id(cumulative_choices[-1][0], cumulative_choices[-1][1])
         else:
             self.choice_id = None
-        self.action_reward = action_reward
+        self.action_reward = action_reward #* math.exp(-0.1 * self.current_round_index)
 
     def is_terminal(self):
         ## Add one more case - check is there any possible move?
-        if self.current_round_index == MAX_ROUND_NUMBER:
+        if self.current_round_index == MAX_SIMULATION_DEPTH:
             return True
         elif self.num_available_choices == 0:
             return True
@@ -186,10 +188,10 @@ def backup(node, reward):
 
 def monte_carlo_tree_search(node):
 
-    computation_budget = 500
+
 
     # Run as much as possible under the computation budget
-    for i in range(computation_budget):
+    for i in range(COMPUTATIONAL_BUDGET):
 
         #print(node.state.current_board)
         # 1. Find the best node to expand
@@ -236,9 +238,13 @@ if __name__ == "__main__":
     #     gameplay.input_pos(choice[0], choice[1])
     #     child = get_best_child(child)
 
+    timer = Timer(ROUND_NUMER)
 
-    for _ in range(20):
+    for _ in range(ROUND_NUMER):
+        timer.start_timer(current_node.state.num_available_choices)
         current_node = monte_carlo_tree_search(current_node)
+        timer.end_timer()
         choice = current_node.state.get_choice()
         print("You have choosen : " + str(choice[0]) + " " + str(choice[1]))
         gameplay.input_pos(choice[0], choice[1])
+    timer.finalize(gameplay.gameboard.score)
