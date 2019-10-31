@@ -1,11 +1,18 @@
-import importlib.util
+# import time
+# import sys
+# for i in range(5):
+#     print (str(i) + "hello")
+#     time.sleep(0.5)
 
-# spec = importlib.util.spec_from_file_location("game", "../game_simulation/game.py")
-# game = importlib.util.module_from_spec(spec)
-# spec.loader.exec_module(game)
-#
-# gb = game.GameBoard()
-# gb.print_board()
-import sys
-sys.path.insert(1, '../game_simulation')
-from GameBoard import GameBoard
+# time.sleep(3)
+# for i in range(5):
+#     print (str(i) + "bye")
+#     time.sleep(1)
+from pynput.keyboard import Key, Controller
+import subprocess
+import time
+keyboard = Controller()
+time.sleep(5)
+keyboard.press("a")
+keyboard.release("a")
+subprocess.Popen(["python3", "../game_simulation/Game.py", "ai"])

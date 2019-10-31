@@ -8,7 +8,7 @@ from GameBoard import GameBoard
 from GameCLI import Game
 
 
-MAX_ROUND_NUMBER = 20
+MAX_ROUND_NUMBER = 15
 
 class Node:
     def __init__(self, state, parent = None):
@@ -186,7 +186,7 @@ def backup(node, reward):
 
 def monte_carlo_tree_search(node):
 
-    computation_budget = 500
+    computation_budget = 200
 
     # Run as much as possible under the computation budget
     for i in range(computation_budget):
@@ -225,20 +225,18 @@ if __name__ == "__main__":
 
     gameplay.gameboard.print_board()
 
-
-    # monte_carlo_tree_search(current_node)
-    # print(current_node.quality_value)
-    # child = get_best_child(current_node)
-    # while  child != None:
-    #     print("my quality_value :" + str(child.quality_value))
-    #     choice = child.state.get_choice()
-    #     print("You have choosen : " + str(choice[0]) + " " + str(choice[1]))
-    #     gameplay.input_pos(choice[0], choice[1])
-    #     child = get_best_child(child)
-
-
     for _ in range(20):
         current_node = monte_carlo_tree_search(current_node)
         choice = current_node.state.get_choice()
         print("You have choosen : " + str(choice[0]) + " " + str(choice[1]))
         gameplay.input_pos(choice[0], choice[1])
+
+    # read a board
+
+    # do computation
+
+    # read the offset
+
+    # modify the result
+
+    #output the result
