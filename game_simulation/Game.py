@@ -24,7 +24,7 @@ colors = [
 
 ASK_BOARD = "b"
 ASK_ROUND = "r"
-
+ASK_CURSOR = "c"
 FPS = 30
 input_string = ""
 
@@ -75,6 +75,7 @@ class Game:
         self.round += 1
         self.gameboard.board.remove(self.gameboard.board[0])
         self.gameboard.board.append(self.gameboard.new_row)
+        self.gameboard.cursor_pos[0] -= 1
 
     def offset_increment(self, offset, score, frame_index):
         if score < 20:
@@ -93,15 +94,15 @@ class Game:
         else:
             return offset % cell_size
 
-    def get_cursor_pos(self,cursor_pos,keys):
-        pygame.time.wait(70)
-        if(keys[K_w] and cursor_pos[0] != 0):
+    def get_cursor_pos(self,cursor_pos,key):
+        #pygame.time.wait(70)
+        if(key == "w" and cursor_pos[0] != 0):
             cursor_pos[0] = cursor_pos[0] - 1
-        elif(keys[K_s] and cursor_pos[0] != self.gameboard.row_dim-1):
+        elif(key == "s" and cursor_pos[0] != self.gameboard.row_dim-1):
             cursor_pos[0] = cursor_pos[0] + 1
-        elif(keys[K_d] and cursor_pos[1] != self.gameboard.column_dim-2):
+        elif(key == "d" and cursor_pos[1] != self.gameboard.column_dim-2):
             cursor_pos[1] = cursor_pos[1] + 1
-        elif (keys[K_a] and cursor_pos[1] != 0):
+        elif (key == "a" and cursor_pos[1] != 0):
             cursor_pos[1] = cursor_pos[1] - 1
 
         return cursor_pos
@@ -132,8 +133,25 @@ class Game:
                             self.print_board()
                         elif event.unicode == ASK_ROUND:
                             print(self.round)
+                        elif event.unicode == ASK_CURSOR:
+                            print(self.gameboard.cursor_pos[0], self.gameboard.cursor_pos[1])
                         else:
                             input_string += event.unicode
+
+                        if choice != None:
+                            self.gameboard.proceed_next_state(int(choice[0]), int(choice[1]))
+                            choice = None
+
+
+
+
+                    #pressed_keys = pygame.key.get_pressed()
+                    pressed_key = event.unicode
+                    self.get_cursor_pos(self.gameboard.cursor_pos,pressed_key)
+                    if(pressed_key == " "):
+                        self.gameboard.proceed_next_state(self.gameboard.cursor_pos[0], self.gameboard.cursor_pos[1])
+                        #pygame.time.wait(200)
+
 
             if self.gameboard.score > 10 and self.stable_mode == True:
                 self.stable_mode = False
@@ -150,17 +168,9 @@ class Game:
                     self.gameboard.get_new_row()
                     offset += 1
 
-            if mode == "human":
-                pressed_keys = pygame.key.get_pressed()
-                self.get_cursor_pos(self.gameboard.cursor_pos,pressed_keys)
-                if(pressed_keys[K_SPACE]):
-                    self.gameboard.proceed_next_state(self.gameboard.cursor_pos[0], self.gameboard.cursor_pos[1])
-                    pygame.time.wait(200)
 
-            if mode == "ai":
-                if choice != None:
-                    self.gameboard.proceed_next_state(int(choice[0]), int(choice[1]))
-                    choice = None
+
+
                 ## read the action queue
 
                 ## pass the action to proceed_next_state

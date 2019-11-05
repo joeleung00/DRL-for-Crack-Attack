@@ -12,7 +12,7 @@ from pynput.keyboard import Key, Controller
 import subprocess
 import time
 keyboard = Controller()
-time.sleep(5)
-keyboard.press("a")
-keyboard.release("a")
 subprocess.Popen(["python3", "../game_simulation/Game.py", "ai"])
+time.sleep(5)
+keyboard.press("r")
+keyboard.release("r")
