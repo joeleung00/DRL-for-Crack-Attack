@@ -8,7 +8,7 @@ from GameBoard import GameBoard
 from GameCLI import Game
 
 
-MAX_ROUND_NUMBER = 15
+MAX_ROUND_NUMBER = 8
 
 class Node:
     def __init__(self, state, parent = None):

@@ -133,4 +133,4 @@ if __name__ == "__main__":
 
         ai.send_position(choice[0], choice[1])
         time.sleep(0.1)
-        count = (count + 1) % 6
+        count = (count + 1) % 3
