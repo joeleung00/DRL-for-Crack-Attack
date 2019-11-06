@@ -133,4 +133,8 @@ if __name__ == "__main__":
 
         ai.send_position(choice[0], choice[1])
         time.sleep(0.1)
+<<<<<<< HEAD
         count = (count + 1) % 3
+=======
+        count = (count + 1) % 3
+>>>>>>> f071a177a04cbcfc5db94932ec89ea35f33ec8f9
