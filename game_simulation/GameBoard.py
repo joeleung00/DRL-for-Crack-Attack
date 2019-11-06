@@ -22,6 +22,7 @@ class GameBoard:
         self.blocks_init_height = 8
         # self.num_of_color = 5
         self.num_of_color = 5
+        self.height = self.blocks_init_height
         if board == None:
             self.board = [[-1 for i in range(self.column_dim)] for j in range(self.row_dim)]
             self.init_board()
@@ -185,6 +186,13 @@ class GameBoard:
                     count += 1
         return count
 
+    def get_height(self):
+        for row in range(self.row_dim):
+            for col in range(self.column_dim):
+                if self.board[row][col] != EMPTY:
+                    return self.row_dim - row
+        return 0
+
     def proceed_next_state(self, row = None, col = None):
         if row != None and col != None:
             self.swap(row, col)
@@ -197,8 +205,11 @@ class GameBoard:
             if (score_gain == 0):
                 break
 
+        new_height = self.get_height()
+        diff = self.height - new_height
+        self.height = new_height
         if self.simulation == True:
-            self.score += total_score_gain * math.exp(-0.1 * self.round_index)
+            self.score += (total_score_gain + 30 * diff)* math.exp(-1.0 * self.round_index)
         else:
             self.score += total_score_gain
         self.round_index += 1
@@ -209,7 +220,8 @@ class GameBoard:
         for row in range(self.row_dim):
             for col in range(self.column_dim - 1):
                 if self.board[row][col] != EMPTY or self.board[row][col + 1] != EMPTY:
-                    choices.append((row, col))
+                    if self.board[row][col] != self.board[row][col + 1]:
+                        choices.append((row, col))
         return choices
 
     def get_new_row(self):

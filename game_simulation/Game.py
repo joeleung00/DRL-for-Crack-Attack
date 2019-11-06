@@ -76,6 +76,7 @@ class Game:
         self.gameboard.board.remove(self.gameboard.board[0])
         self.gameboard.board.append(self.gameboard.new_row)
         self.gameboard.cursor_pos[0] -= 1
+        self.gameboard.height += 1
 
     def offset_increment(self, offset, score, frame_index):
         if score < 20:

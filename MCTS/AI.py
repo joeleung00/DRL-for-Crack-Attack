@@ -63,8 +63,13 @@ class AI:
 
     def ask_round(self):
         self.string2keyboard("r")
-        line = self.wait_console("b")
-        self.round = int(line)
+        line = self.wait_console("r")
+        return int(line)
+
+    def offset_choice(self, row, col):
+        new_round = self.ask_round()
+        diff = new_round - self.round
+        return (row - diff, col)
 
     def ask_cursor(self):
         self.string2keyboard("c")
@@ -108,19 +113,24 @@ if __name__ == "__main__":
     ai = AI()
     time.sleep(5)
 
-
+    count = 0
 
     while True:
-        ai.ask_board()
-        gameboard = GameBoard(ai.board)
-        num_available_choices = len(gameboard.get_available_choices())
-        init_state = State(gameboard.board, 0, [], num_available_choices)
-        root_node = Node(state=init_state)
+        if count == 0:
+            ai.ask_board()
+            ai.round = ai.ask_round()
+            gameboard = GameBoard(ai.board)
+            num_available_choices = len(gameboard.get_available_choices())
+            init_state = State(gameboard.board, 0, [], num_available_choices)
+            root_node = Node(state=init_state)
+            current_node = root_node
 
-        current_node = monte_carlo_tree_search(root_node)
+        current_node = monte_carlo_tree_search(current_node)
         choice = current_node.state.get_choice()
         print("You have choosen : " + str(choice[0]) + " " + str(choice[1]))
+        choice = ai.offset_choice(choice[0], choice[1])
         ai.ask_cursor()
 
         ai.send_position(choice[0], choice[1])
         time.sleep(0.1)
+        count = (count + 1) % 6
