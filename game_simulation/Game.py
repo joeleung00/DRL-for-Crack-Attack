@@ -184,7 +184,7 @@ class Game:
 
             if(self.gameboard.board[0]!=self.gameboard.empty_row):
                 gameover_text = self.testFont.render("Game Over", False, (255, 255, 255))
-                self.screen.blit(gameover_text, (self.gameboard.column_dim + 1) * cell_size, (self.gameboard.row_dim * cell_size+1) / 2)
+                self.screen.blit(gameover_text, ((self.gameboard.column_dim + 1) * cell_size, (self.gameboard.row_dim * cell_size+1) / 2))
                 gameover = True
 
             pygame.display.update()
