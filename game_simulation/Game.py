@@ -1,10 +1,11 @@
+from os import environ
+environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import random
 import pygame
 import time
 from pygame.locals import *
 from sys import exit
 import sys
-#from joblib import Parallel, delayed
 import sys
 sys.path.insert(1, '../MCTS')
 
@@ -61,7 +62,7 @@ class Game:
         pygame.draw.rect(self.screen, pygame.Color(255,255,255),pygame.Rect(cursor_pos[1] * cell_size, + cursor_pos[0] * cell_size - offset, cell_size*2, cell_size), 5)
 
         scoreObj = self.testFont.render("Score: %d" % self.gameboard.score, False, (255, 255, 255))
-        self.screen.blit(scoreObj, (200, 200))
+        self.screen.blit(scoreObj,((self.gameboard.column_dim + 1) * cell_size, self.gameboard.row_dim * cell_size / 2))
 
 
     def print_board(self):
@@ -184,7 +185,7 @@ class Game:
 
             if(self.gameboard.board[0]!=self.gameboard.empty_row):
                 gameover_text = self.testFont.render("Game Over", False, (255, 255, 255))
-                self.screen.blit(gameover_text, (200, 250))
+                self.screen.blit(gameover_text, ((self.gameboard.column_dim + 1) * cell_size, (self.gameboard.row_dim * cell_size+1) / 2))
                 gameover = True
 
             pygame.display.update()
