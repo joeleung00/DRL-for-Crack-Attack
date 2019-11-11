@@ -8,8 +8,8 @@ from GameBoard import GameBoard
 from GameCLI import Game
 
 
-MAX_ROUND_NUMBER = 8
-
+#MAX_ROUND_NUMBER = 8
+MAX_ROUND_NUMBER = 3
 class Node:
     def __init__(self, state, parent = None):
         self.parent = parent
@@ -152,13 +152,13 @@ def best_child(node, is_exploration):
     # Ignore exploration for inference
     if is_exploration:
       C = 1 / math.sqrt(2.0)
+      # UCB = quality / times + C * sqrt(2 * ln(total_times) / times)
+      left = sub_node.quality_value / sub_node.visited_times
+      right = 2.0 * math.log(node.visited_times) / sub_node.visited_times
+      score = left + C * math.sqrt(right)
     else:
-      C = 0.0
+      score = sub_node.visited_times
 
-    # UCB = quality / times + C * sqrt(2 * ln(total_times) / times)
-    left = sub_node.quality_value / sub_node.visited_times
-    right = 2.0 * math.log(node.visited_times) / sub_node.visited_times
-    score = left + C * math.sqrt(right)
 
     if score > best_score:
       best_sub_node = sub_node
@@ -186,7 +186,7 @@ def backup(node, reward):
 
 def monte_carlo_tree_search(node):
 
-    computation_budget = 200
+    computation_budget = 300
 
     # Run as much as possible under the computation budget
     for i in range(computation_budget):
@@ -225,8 +225,12 @@ if __name__ == "__main__":
 
     gameplay.gameboard.print_board()
 
-    for _ in range(20):
+    for i in range(20):
+        previous_node = current_node
         current_node = monte_carlo_tree_search(current_node)
+        if current_node == None:
+            print("No good move after round:", str(i))
+            break
         choice = current_node.state.get_choice()
         print("You have choosen : " + str(choice[0]) + " " + str(choice[1]))
         gameplay.input_pos(choice[0], choice[1])

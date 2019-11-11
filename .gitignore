@@ -2,5 +2,6 @@ game_simulation/.vscode
 game_simulation/__pycache__/*
 .DS_Store
 game_simulation/.DS_Store
+game_simulation/output/
 MTCS/.DS_Store
 MCTS/__pycache__/

@@ -19,7 +19,7 @@ class GameBoard:
         # self.blocks_init_height = 8
         self.row_dim = 12
         self.column_dim = 6
-        self.blocks_init_height = 8
+        self.blocks_init_height = 7
         # self.num_of_color = 5
         self.num_of_color = 5
         self.height = self.blocks_init_height
@@ -209,7 +209,8 @@ class GameBoard:
         diff = self.height - new_height
         self.height = new_height
         if self.simulation == True:
-            self.score += (total_score_gain + 30 * diff)* math.exp(-0.8 * self.round_index)
+            #self.score += (total_score_gain + 30 * diff)* math.exp(-0.8 * self.round_index)
+            self.score += (total_score_gain + 30 * diff)#* math.exp(-0.2 * self.round_index)
         else:
             self.score += total_score_gain
         self.round_index += 1

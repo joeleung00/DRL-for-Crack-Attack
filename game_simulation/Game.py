@@ -79,15 +79,16 @@ class Game:
         self.gameboard.height += 1
 
     def offset_increment(self, offset, score, frame_index):
-        if score < 20:
-            ## It take 15 second to add the whole row
-            new_row_time = 15
-        elif score < 30:
-            new_row_time = 10
-        elif score < 50:
-            new_row_time = 7
-        else:
-            new_row_time = 5
+        # if score < 20:
+        #     ## It take 15 second to add the whole row
+        #     new_row_time = 15
+        # elif score < 30:
+        #     new_row_time = 10
+        # elif score < 50:
+        #     new_row_time = 7
+        # else:
+        #     new_row_time = 5
+        new_row_time = 1
 
         frame_dist = int (new_row_time * FPS / cell_size)
         if frame_index % frame_dist == 0:

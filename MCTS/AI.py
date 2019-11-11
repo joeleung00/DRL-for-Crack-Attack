@@ -6,8 +6,8 @@ from MCTS import *
 sys.path.insert(1, '../game_simulation')
 from GameBoard import GameBoard
 # from Game import Game
-WAITING_TIME = 0.2
-
+#WAITING_TIME = 0.1
+WAITING_TIME = 0
 class AI:
     def __init__(self):
         self.game = subprocess.Popen(["python3", "-u", "../game_simulation/Game.py", "ai"], stdout=subprocess.PIPE, bufsize=1)
@@ -52,7 +52,7 @@ class AI:
         for ch in string:
             self.keyboard.press(ch)
             self.keyboard.release(ch)
-            time.sleep(0.1)
+            time.sleep(WAITING_TIME)
 
 
 
@@ -132,5 +132,5 @@ if __name__ == "__main__":
         ai.ask_cursor()
 
         ai.send_position(choice[0], choice[1])
-        time.sleep(0.1)
+        #time.sleep(0.1)
         count = (count + 1) % 3
