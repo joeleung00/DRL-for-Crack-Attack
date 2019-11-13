@@ -7,6 +7,8 @@ YELLOW = 1
 GREEN = 2
 ORANGE = 3
 PURPLE = 4
+Gray = 5
+RED = 6
 MARKED = 12
 
 
@@ -21,7 +23,7 @@ class GameBoard:
         self.column_dim = 6
         self.blocks_init_height = 7
         # self.num_of_color = 5
-        self.num_of_color = 5
+        self.num_of_color = 6
         self.height = self.blocks_init_height
         if board == None:
             self.board = [[-1 for i in range(self.column_dim)] for j in range(self.row_dim)]

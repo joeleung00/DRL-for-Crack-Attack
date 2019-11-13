@@ -20,7 +20,9 @@ colors = [
 (0, 128, 0),
 (255, 128, 0),
 (128, 0, 128),
-(0, 0, 0)
+(220,220,220),
+(255,0,0),
+(0, 0, 0),
 ]
 
 ASK_BOARD = "b"
@@ -89,7 +91,7 @@ class Game:
         #     new_row_time = 7
         # else:
         #     new_row_time = 5
-        new_row_time = 1
+        new_row_time = 3
 
         frame_dist = int (new_row_time * FPS / cell_size)
         if frame_index % frame_dist == 0:

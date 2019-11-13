@@ -6,8 +6,8 @@ from MCTS import *
 sys.path.insert(1, '../game_simulation')
 from GameBoard import GameBoard
 # from Game import Game
-#WAITING_TIME = 0.1
-WAITING_TIME = 0
+WAITING_TIME = 0.1
+#WAITING_TIME = 0
 class AI:
     def __init__(self):
         self.game = subprocess.Popen(["python3", "-u", "../game_simulation/Game.py", "ai"], stdout=subprocess.PIPE, bufsize=1)
