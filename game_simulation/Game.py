@@ -91,7 +91,7 @@ class Game:
         #     new_row_time = 7
         # else:
         #     new_row_time = 5
-        new_row_time = 3
+        new_row_time = 5
 
         frame_dist = int (new_row_time * FPS / cell_size)
         if frame_index % frame_dist == 0:

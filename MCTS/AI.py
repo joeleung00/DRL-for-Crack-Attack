@@ -6,7 +6,7 @@ from MCTS import *
 sys.path.insert(1, '../game_simulation')
 from GameBoard import GameBoard
 # from Game import Game
-WAITING_TIME = 0.1
+WAITING_TIME = 0
 #WAITING_TIME = 0
 class AI:
     def __init__(self):
@@ -127,6 +127,7 @@ if __name__ == "__main__":
 
         current_node = monte_carlo_tree_search(current_node)
         choice = current_node.state.get_choice()
+        #time.sleep(5 / 3)
         print("You have choosen : " + str(choice[0]) + " " + str(choice[1]))
         choice = ai.offset_choice(choice[0], choice[1])
         ai.ask_cursor()

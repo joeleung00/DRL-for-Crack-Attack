@@ -5,3 +5,4 @@ game_simulation/.DS_Store
 game_simulation/output/
 MTCS/.DS_Store
 MCTS/__pycache__/
+cnn/__pycache__/

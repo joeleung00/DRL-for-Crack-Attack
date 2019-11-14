@@ -6,8 +6,9 @@ import sys
 sys.path.insert(1, '../game_simulation')
 from GameBoard import GameBoard
 from GameCLI import Game
+from Inferencer import Inferencer
 
-
+inferencer = Inferencer()
 #MAX_ROUND_NUMBER = 8
 MAX_ROUND_NUMBER = 3
 class Node:
@@ -100,6 +101,9 @@ def default_policy(node):
     current_state = node.state
     #print(current_state.current_board)
 
+    ## Then add the inferencing score
+    additional_score = inferencer.inference(current_state.current_board)
+
     simulation_board = GameBoard(current_state.current_board, simulation = True)
     # Run until the game over
     while current_state.is_terminal() == False:
@@ -108,8 +112,11 @@ def default_policy(node):
         current_state = current_state.get_next_state_with_random_choice(simulation_board)
 
     final_state_reward = current_state.compute_reward(simulation_board)
+
+
+
     #print("reward: " + str(final_state_reward))
-    return final_state_reward
+    return final_state_reward + additional_score
 
 
 def expand(node):
