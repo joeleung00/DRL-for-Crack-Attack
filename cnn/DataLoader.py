@@ -2,7 +2,7 @@ import torch
 import torch.utils.data as Data
 from torch.utils.data.sampler import SubsetRandomSampler
 import numpy as np
-data = np.load("/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/input/full_data_6color_onehot.npz")
+data = np.load("/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/input/full_data_6color_score.npz")
 npfeatures = data["features"]
 nplabels = data["labels"]
 NUM_OF_COLOR = 6

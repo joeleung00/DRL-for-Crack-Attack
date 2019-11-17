@@ -8,7 +8,8 @@ from GameBoard import GameBoard
 from GameCLI import Game
 from Inferencer import Inferencer
 
-inferencer = Inferencer()
+small_inferencer = Inferencer("/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/network/network4.pth", True)
+big_inferencer = Inferencer("/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/network/network3.pth", False)
 #MAX_ROUND_NUMBER = 8
 MAX_ROUND_NUMBER = 3
 class Node:
@@ -102,21 +103,22 @@ def default_policy(node):
     #print(current_state.current_board)
 
     ## Then add the inferencing score
-    additional_score = inferencer.inference(current_state.current_board)
+    big_score = big_inferencer.inference(current_state.current_board)
+    small_score = small_inferencer.inference(current_state.current_board)
+    return big_score + small_score
 
-    simulation_board = GameBoard(current_state.current_board, simulation = True)
-    # Run until the game over
-    while current_state.is_terminal() == False:
+    # simulation_board = GameBoard(current_state.current_board, simulation = True)
+    #
+    #
+    # while current_state.is_terminal() == False:
+    #
+    #     # Pick one random action to play and get next state
+    #     current_state = current_state.get_next_state_with_random_choice(simulation_board)
+    #
+    # final_state_reward = current_state.compute_reward(simulation_board)
 
-        # Pick one random action to play and get next state
-        current_state = current_state.get_next_state_with_random_choice(simulation_board)
 
-    final_state_reward = current_state.compute_reward(simulation_board)
-
-
-
-    #print("reward: " + str(final_state_reward))
-    return final_state_reward + additional_score
+    # return final_state_reward #+ additional_score
 
 
 def expand(node):

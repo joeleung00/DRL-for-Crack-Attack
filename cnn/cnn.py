@@ -10,7 +10,7 @@ from sklearn.metrics import f1_score
 import sys
 ## image size is 12 * 6
 ## one max pool 6 * 3
-PATH = './network/network3.pth'
+PATH = './network/network4.pth'
 TOTAL_EPOCH = 3
 class Net(nn.Module):
 
@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
     criterion = nn.CrossEntropyLoss()
     #criterion = nn.MSELoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.5)
+    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
 
     if MODE != "testonly":

@@ -140,11 +140,12 @@ if __name__ == "__main__":
 
         current_time = time.time()
         time_interval = current_time - previous_time
-        if time_interval < 1.0:
-            time.sleep(1.0 - time_interval)
+        print(time_interval)
+        if time_interval < 1.25:
+            time.sleep(1.25 - time_interval)
 
         previous_time = time.time()
 
         ai.send_position(choice[0], choice[1])
         #time.sleep(0.1)
-        count = (count + 1) % 3
+        count = (count + 1) % 1

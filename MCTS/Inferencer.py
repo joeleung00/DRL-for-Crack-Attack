@@ -5,7 +5,7 @@
 import sys
 sys.path.insert(1, '../cnn')
 sys.path.insert(1, '../game_simulation')
-PATH = "/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/network/network3.pth"
+PATH = "/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/network/network4.pth"
 from cnn import Net
 from GameBoard import GameBoard
 import torch
@@ -15,9 +15,11 @@ ROW_DIM = 12
 COLUMN_DIM = 6
 
 class Inferencer:
-    def __init__(self):
+    def __init__(self, path, small):
         self.net = Net()
-        self.net.load_state_dict(torch.load(PATH))
+        self.path = path
+        self.small = small
+        self.net.load_state_dict(torch.load(path))
 
     def change_format(self, board):
         np_onehot = self.to_one_hot(board)
@@ -34,7 +36,10 @@ class Inferencer:
 
 
     def transform(self, value):
-        return value * 30
+        if (self.small):
+            return value * 3
+        else:
+            return value * 30
 
     def to_one_hot(self, board):
         onehot = np.zeros((1, NUM_OF_COLOR + 1, ROW_DIM, COLUMN_DIM))
