@@ -5,7 +5,7 @@
 import sys
 sys.path.insert(1, '../cnn')
 sys.path.insert(1, '../game_simulation')
-PATH = "/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/network/network2.pth"
+PATH = "/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/network/network3.pth"
 from cnn import Net
 from GameBoard import GameBoard
 import torch
@@ -26,14 +26,15 @@ class Inferencer:
 
 
     def inference(self, board):
-        tensor = self.change_format(board)
-        output = self.net(tensor)
-        _, predicted = torch.max(output.data, 1)
+        with torch.no_grad():
+            tensor = self.change_format(board)
+            output = self.net(tensor)
+            _, predicted = torch.max(output.data, 1)
         return self.transform(predicted.item())
 
 
     def transform(self, value):
-        return value * 10
+        return value * 30
 
     def to_one_hot(self, board):
         onehot = np.zeros((1, NUM_OF_COLOR + 1, ROW_DIM, COLUMN_DIM))

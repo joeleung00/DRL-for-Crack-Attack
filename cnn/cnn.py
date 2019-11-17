@@ -10,7 +10,8 @@ from sklearn.metrics import f1_score
 import sys
 ## image size is 12 * 6
 ## one max pool 6 * 3
-PATH = './network/network2.pth'
+PATH = './network/network3.pth'
+TOTAL_EPOCH = 3
 class Net(nn.Module):
 
     def __init__(self):
@@ -21,12 +22,11 @@ class Net(nn.Module):
         #self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(28, 56, 3, padding=1)
 
-        self.conv3 = nn.Conv2d(56, 128, 3, padding=1)
+        #self.conv3 = nn.Conv2d(56, 128, 3, padding=1)
         # an affine operation: y = Wx + b
-        self.fc1 = nn.Linear(128 * 12 * 6, 1024)
-        self.fc2 = nn.Linear(1024, 128)
-        self.fc3 = nn.Linear(128, 32)
-        self.fc4 = nn.Linear(32, 5)
+        self.fc1 = nn.Linear(56 * 12 * 6, 128)
+        self.fc2 = nn.Linear(128, 32)
+        self.fc3 = nn.Linear(32, 5)
 
     def forward(self, x):
         # Max pooling over a (2, 2) window
@@ -34,13 +34,11 @@ class Net(nn.Module):
         #x = self.pool(x)
         # If the size is a square you can only specify a single number
         x = F.relu(self.conv2(x))
-        x = F.relu(self.conv3(x))
         #print(x.shape)
         x = x.view(-1, self.num_flat_features(x))
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        x = self.fc4(x)
+        x = F.log_softmax(self.fc3(x), dim=1)
         return x
 
     def num_flat_features(self, x):
@@ -72,11 +70,11 @@ if __name__ == "__main__":
 
     criterion = nn.CrossEntropyLoss()
     #criterion = nn.MSELoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.0001, momentum=0.5)
+    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.5)
 
 
     if MODE != "testonly":
-        for epoch in range(1):
+        for epoch in range(TOTAL_EPOCH):
             running_loss = 0.0
             for i, data in enumerate(trainloader, 0):
                 # get the inputs; data is a list of [inputs, labels]

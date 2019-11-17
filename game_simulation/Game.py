@@ -91,7 +91,7 @@ class Game:
         #     new_row_time = 7
         # else:
         #     new_row_time = 5
-        new_row_time = 5
+        new_row_time = 3
 
         frame_dist = int (new_row_time * FPS / cell_size)
         if frame_index % frame_dist == 0:
@@ -116,6 +116,7 @@ class Game:
         #stable means the board does not move
 
         #gameboard.new_row=self.get_new_row(self.gameboard.board)
+        swap_count  = 0
         offset = 0
         gameover = False
         frame_index = 0
@@ -155,6 +156,7 @@ class Game:
                     self.get_cursor_pos(self.gameboard.cursor_pos,pressed_key)
                     if(pressed_key == " "):
                         self.gameboard.proceed_next_state(self.gameboard.cursor_pos[0], self.gameboard.cursor_pos[1])
+                        swap_count += 1
                         #pygame.time.wait(200)
 
 
@@ -193,6 +195,8 @@ class Game:
             pygame.display.update()
             if gameover:
                 pygame.time.wait(2000)
+                print("performance: %.2f" % (self.gameboard.score / swap_count))
+
 
             clock.tick(FPS)
             frame_index = (frame_index + 1) % (FPS * 10)

@@ -43,6 +43,10 @@ class AI:
                 print("wait for output")
                 self.string2keyboard(resend)
                 self.check_end_game()
+            elif line[0:2] == b"per":
+                print(line.decode("utf-8"))
+                print("End Game")
+                exit(0)
             else:
                 break
 
@@ -115,6 +119,8 @@ if __name__ == "__main__":
 
     count = 0
 
+    previous_time = 0
+
     while True:
         if count == 0:
             ai.ask_board()
@@ -127,10 +133,17 @@ if __name__ == "__main__":
 
         current_node = monte_carlo_tree_search(current_node)
         choice = current_node.state.get_choice()
-        #time.sleep(5 / 3)
+
         print("You have choosen : " + str(choice[0]) + " " + str(choice[1]))
         choice = ai.offset_choice(choice[0], choice[1])
         ai.ask_cursor()
+
+        current_time = time.time()
+        time_interval = current_time - previous_time
+        if time_interval < 1.0:
+            time.sleep(1.0 - time_interval)
+
+        previous_time = time.time()
 
         ai.send_position(choice[0], choice[1])
         #time.sleep(0.1)
