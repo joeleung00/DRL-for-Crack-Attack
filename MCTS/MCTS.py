@@ -8,8 +8,8 @@ from GameBoard import GameBoard
 from GameCLI import Game
 from Inferencer import Inferencer
 
-small_inferencer = Inferencer("/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/network/network4.pth", True)
-big_inferencer = Inferencer("/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/network/network3.pth", False)
+#small_inferencer = Inferencer("/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/network/network4.pth", True)
+#big_inferencer = Inferencer("/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/network/network3.pth", False)
 #MAX_ROUND_NUMBER = 8
 MAX_ROUND_NUMBER = 3
 class Node:
@@ -76,6 +76,23 @@ class State:
 
         return next_state
 
+    def get_next_best_state(self, simulation_board):
+        available_choices = simulation_board.get_available_choices()
+        best_choice = available_choices[0]
+        best_score = 0
+        for choice in available_choices:
+            tmp_board = GameBoard(simulation_board.board, simulation = True)
+            score = tmp_board.proceed_next_state(choice[0], choice[1])
+            if score > best_score:
+                best_score = score
+                best_choice = choice
+        action_reward = simulation_board.proceed_next_state(best_choice[0], best_choice[1])
+        available_choices = simulation_board.get_available_choices()
+        next_state =  State(simulation_board.board, self.current_round_index + 1,
+            self.cumulative_choices + [best_choice], len(available_choices), action_reward)
+
+        return next_state
+
     def get_choice(self):
         return self.cumulative_choices[-1]
 
@@ -102,23 +119,40 @@ def default_policy(node):
     current_state = node.state
     #print(current_state.current_board)
 
+    #############
     ## Then add the inferencing score
-    big_score = big_inferencer.inference(current_state.current_board)
-    small_score = small_inferencer.inference(current_state.current_board)
-    return big_score + small_score
+    # big_score = big_inferencer.inference(current_state.current_board)
+    # small_score = small_inferencer.inference(current_state.current_board)
+    # return big_score + small_score
+    #############
+
+    ############
+    simulation_board = GameBoard(current_state.current_board, simulation = True)
+
+
+    while current_state.is_terminal() == False:
+
+        # Pick one random action to play and get next state
+        current_state = current_state.get_next_state_with_random_choice(simulation_board)
+
+    final_state_reward = current_state.compute_reward(simulation_board)
+
+
+    return final_state_reward #+ additional_score
+    ############
 
     # simulation_board = GameBoard(current_state.current_board, simulation = True)
-    #
-    #
     # while current_state.is_terminal() == False:
     #
     #     # Pick one random action to play and get next state
-    #     current_state = current_state.get_next_state_with_random_choice(simulation_board)
+    #     current_state = current_state.get_next_best_state(simulation_board)
     #
     # final_state_reward = current_state.compute_reward(simulation_board)
+    #
+    # return final_state_reward
 
 
-    # return final_state_reward #+ additional_score
+
 
 
 def expand(node):
@@ -195,7 +229,7 @@ def backup(node, reward):
 
 def monte_carlo_tree_search(node):
 
-    computation_budget = 300
+    computation_budget = 600
 
     # Run as much as possible under the computation budget
     for i in range(computation_budget):
@@ -234,7 +268,13 @@ if __name__ == "__main__":
 
     gameplay.gameboard.print_board()
 
-    for i in range(20):
+    for i in range(70):
+        if i % MAX_ROUND_NUMBER == 0:
+            num_available_choices = len(gameplay.gameboard.get_available_choices())
+            init_state = State(gameplay.gameboard.board, 0, [], num_available_choices)
+            root_node = Node(state=init_state)
+            current_node = root_node
+
         previous_node = current_node
         current_node = monte_carlo_tree_search(current_node)
         if current_node == None:
@@ -243,13 +283,15 @@ if __name__ == "__main__":
         choice = current_node.state.get_choice()
         print("You have choosen : " + str(choice[0]) + " " + str(choice[1]))
         gameplay.input_pos(choice[0], choice[1])
+        if gameplay.gameboard.score >= 30 and gameplay.gameboard.score < 40:
+            print("Score per round: %f" % (gameplay.gameboard.score / i))
 
-    # read a board
+        if gameplay.gameboard.score >= 40 and gameplay.gameboard.score < 50:
+            print("Score per round: %f" % (gameplay.gameboard.score / i))
 
-    # do computation
+        if gameplay.gameboard.score >= 50 and gameplay.gameboard.score < 60:
+            print("Score per round: %f" % (gameplay.gameboard.score / i))
 
-    # read the offset
-
-    # modify the result
-
-    #output the result
+        if gameplay.gameboard.score >= 60 or i == 69:
+            print("Score per round: %f" % (gameplay.gameboard.score / i))
+            break

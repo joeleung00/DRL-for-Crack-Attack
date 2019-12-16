@@ -1,6 +1,8 @@
 import random
 from copy import copy, deepcopy
 import math
+from parameters import Parameter
+
 EMPTY = -1
 BLUE = 0
 YELLOW = 1
@@ -11,23 +13,23 @@ Gray = 5
 RED = 6
 MARKED = 12
 
-
+Step_penalty = 0
 
 class GameBoard:
-    def __init__(self, board = None, simulation = False):
+    def __init__(self, board = None, simulation = False, filename = None): ## filename is for loading from file
         self.score = 0.0
         # self.row_dim = 12
         # self.column_dim = 6
         # self.blocks_init_height = 8
-        self.row_dim = 12
-        self.column_dim = 6
-        self.blocks_init_height = 7
+        self.row_dim = Parameter.ROW_DIM
+        self.column_dim = Parameter.COLUMN_DIM
+        self.blocks_init_height = Parameter.INIT_HEIGHT
         # self.num_of_color = 5
-        self.num_of_color = 6
+        self.num_of_color = Parameter.NUM_OF_COLOR
         self.height = self.blocks_init_height
         if board == None:
             self.board = [[-1 for i in range(self.column_dim)] for j in range(self.row_dim)]
-            self.init_board()
+            self.init_board(filename)
         else:
             self.board = deepcopy(board)
         self.round_index = 0
@@ -68,7 +70,16 @@ class GameBoard:
                     break
         return result
 
-    def init_board(self):
+    def load_board_from_file(self, filename):
+        f = open(filename, "r")
+        for row, line in enumerate(f):
+            self.board[row] = list(map(int, line.split(" ")))
+
+
+    def init_board(self, filename):
+        if filename != None:
+            self.load_board_from_file(filename)
+            return
         for row in range(self.row_dim - 1, self.row_dim - self.blocks_init_height - 1, -1):
             for col in range(self.column_dim):
                 self.board[row][col] = self.get_random_block(row, col)
@@ -214,9 +225,9 @@ class GameBoard:
             #self.score += (total_score_gain + 30 * diff)* math.exp(-0.8 * self.round_index)
             self.score += (total_score_gain + 30 * diff)#* math.exp(-0.2 * self.round_index)
         else:
-            self.score += total_score_gain
+            self.score += total_score_gain - Step_penalty
         self.round_index += 1
-        return total_score_gain
+        return total_score_gain - Step_penalty
 
     def get_available_choices(self):
         choices = []
@@ -228,6 +239,7 @@ class GameBoard:
         return choices
 
     def get_new_row(self):
+
         row=[None]*self.column_dim
         for i in range(self.column_dim):
             row[i] = random.randint(0, self.num_of_color - 1)

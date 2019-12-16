@@ -2,18 +2,26 @@ import torch
 import torch.utils.data as Data
 from torch.utils.data.sampler import SubsetRandomSampler
 import numpy as np
-data = np.load("/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/input/full_data_6color_score.npz")
+import sys
+sys.path.insert(1, '../game_simulation')
+from parameters import Parameter
+data = np.load("/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/input/full_data_6color_small.npz")
 npfeatures = data["features"]
 nplabels = data["labels"]
-NUM_OF_COLOR = 6
-ROW_DIM = 12
-COLUMN_DIM = 6
+
+NUM_OF_COLOR = Parameter.NUM_OF_COLOR
+ROW_DIM = Parameter.ROW_DIM
+COLUMN_DIM = Parameter.COLUMN_DIM
 class DataLoader:
-	def __init__(self):
+	def __init__(self, labels_type = "int64"):
 		self.data_size = len(nplabels)
 		self.batch_size = 5
 		self.features = torch.from_numpy(self.to_one_hot()).type(torch.float32)
-		self.labels = torch.from_numpy(nplabels).type(torch.int64)
+		if labels_type == "int64":
+			self.labels = torch.from_numpy(nplabels).type(torch.int64)
+		elif labels_type == "float":
+			self.labels = torch.from_numpy(nplabels).type(torch.float)
+
 		self.torch_dataset = Data.TensorDataset(self.features, self.labels)
 		self.num_workers = 2
 		self.shuffle_dataset = True

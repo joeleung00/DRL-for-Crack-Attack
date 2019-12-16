@@ -10,9 +10,10 @@ from cnn import Net
 from GameBoard import GameBoard
 import torch
 import numpy as np
-NUM_OF_COLOR = 6
-ROW_DIM = 12
-COLUMN_DIM = 6
+from parameters import Parameter
+NUM_OF_COLOR = Parameter.NUM_OF_COLOR
+ROW_DIM = Parameter.ROW_DIM
+COLUMN_DIM = Parameter.COLUMN_DIM
 
 class Inferencer:
     def __init__(self, path, small):

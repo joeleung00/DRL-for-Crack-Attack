@@ -2,8 +2,10 @@ from GameBoard import GameBoard
 import random
 class Game:
 
-    def __init__(self):
-        self.gameboard = GameBoard()
+    def __init__(self, filename = None, show=True):
+        self.gameboard = GameBoard(filename = filename)
+        self.gameover_round = 50
+        self.show = show
         #self.gameboard.init_board()
 
     def wait_input(self):
@@ -15,8 +17,12 @@ class Game:
             self.gameboard.print_board()
 
     def input_pos(self, x, y):
-        self.gameboard.proceed_next_state(int(x), int(y))
-        self.gameboard.print_board()
+        marginal_score = self.gameboard.proceed_next_state(int(x), int(y))
+        if self.show:
+            print("You have chosen: ", x, y)
+            self.gameboard.print_board()
+            print("score is %d" % (self.gameboard.score))
+        return self.gameboard.board, marginal_score
 
     def test_game(self):
         self.gameboard.test_board()
@@ -47,6 +53,12 @@ class Game:
     def random_player(self):
         available_choices = self.gameboard.get_available_choices()
         return random.choice(available_choices)
+
+    def termination(self):
+        if not self.gameboard.get_available_choices() or self.gameboard.round_index >= self.gameover_round:
+            return True
+
+        return False
 
 if __name__ == "__main__":
     game = Game()

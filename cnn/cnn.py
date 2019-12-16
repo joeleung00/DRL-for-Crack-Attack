@@ -8,23 +8,28 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import precision_score
 from sklearn.metrics import f1_score
 import sys
+from parameters import Parameter
 ## image size is 12 * 6
 ## one max pool 6 * 3
-PATH = './network/network4.pth'
-TOTAL_EPOCH = 3
+PATH = './network/network5.pth'
+TOTAL_EPOCH = 2
+NUM_OF_COLOR = Parameter.NUM_OF_COLOR
+ROW_DIM = Parameter.ROW_DIM
+COLUMN_DIM = Parameter.COLUMN_DIM
+MAX_POSSIBLE_MOVE = ROW_DIM * COLUMN_DIM
 class Net(nn.Module):
 
     def __init__(self):
         super(Net, self).__init__()
         # 1 input image channel, 6 output channels, 3x3 square convolution
         # kernel
-        self.conv1 = nn.Conv2d(7, 28, 3, padding=1)
+        self.conv1 = nn.Conv2d(NUM_OF_COLOR + 1, 28, 3, padding=1)
         #self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(28, 56, 3, padding=1)
 
         #self.conv3 = nn.Conv2d(56, 128, 3, padding=1)
         # an affine operation: y = Wx + b
-        self.fc1 = nn.Linear(56 * 12 * 6, 128)
+        self.fc1 = nn.Linear(56 * ROW_DIM * COLUMN_DIM, 128)
         self.fc2 = nn.Linear(128, 32)
         self.fc3 = nn.Linear(32, 5)
 
@@ -39,6 +44,7 @@ class Net(nn.Module):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = F.log_softmax(self.fc3(x), dim=1)
+
         return x
 
     def num_flat_features(self, x):
@@ -56,6 +62,9 @@ if __name__ == "__main__":
         exit(0)
 
     MODE = sys.argv[1]
+    if MODE != "new" and MODE != "continue" and MODE != "testonly":
+        print("enter new or continue or testonly")
+        exit(0)
 
 
 
@@ -126,6 +135,8 @@ if __name__ == "__main__":
     print("recall: " + str(recall_score(lab, pre, average='micro')))
     print("precision: " + str(precision_score(lab, pre, average='micro')))
     print("f1 socre: " + str(f1_score(lab, pre, average='micro')))
+
+
     # show_target = 20
     # show_count = 0
     # with torch.no_grad():

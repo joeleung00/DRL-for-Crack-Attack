@@ -6,3 +6,7 @@ game_simulation/output/
 MTCS/.DS_Store
 MCTS/__pycache__/
 cnn/__pycache__/
+TD_learning/train_data
+TD_learning/network
+cnn/input/
+cnn/network
