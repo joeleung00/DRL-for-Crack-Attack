@@ -30,22 +30,22 @@ MAX_ROUND_NUMBER = 5
 
 epsilon = 1.0
 final_epsilon = 0.1
-epsilon_step_num = 10000
+epsilon_step_num = 1000
 epsilon_decay = (1.0 - final_epsilon) / epsilon_step_num
 gamma_rate = 0.9
 n_step = 5
 batch_size = 32
-observations_steps = 100
+observations_steps = 500
 nEpisode = 20000
-target_model_period = 100
+target_model_period = 500
 save_model_period = 2500
 epoch_per_batch = 2
 lambda_rate = 0.5
 
 net = Net()
 target_net = Net()
-criterion = nn.SmoothL1Loss()
-#criterion = nn.MSELoss()
+#criterion = nn.SmoothL1Loss()
+criterion = nn.MSELoss()
 optimizer = optim.SGD(net.parameters(), lr=0.0005, momentum=0.7)
 
 ## action is a flat arrary
@@ -87,6 +87,7 @@ def get_batch_from_memory():
         rewards.append(value[2])
         next_states[i] = value[3]
 
+
     ## return data are all ten
     return (current_states, actions, rewards, next_states)
 
@@ -112,6 +113,7 @@ def batch_learning():
     ## actions is a flatten_action
     current_state_batch , actions, rewards, next_state_batch = get_batch_from_memory()
     #print(list(map(pre_process_features, next_state_batch)))
+    
     next_state_batch = torch.FloatTensor(list(map(pre_process_features, next_state_batch)))
 
     actions_mask = torch.from_numpy(np.ones((batch_size,ACTION_SIZE))).type(torch.float32)

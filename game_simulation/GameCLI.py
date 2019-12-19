@@ -4,7 +4,7 @@ class Game:
 
     def __init__(self, filename = None, show=True):
         self.gameboard = GameBoard(filename = filename)
-        self.gameover_round = 50
+        self.gameover_round = 10
         self.show = show
         #self.gameboard.init_board()
 
@@ -62,7 +62,7 @@ class Game:
 
 if __name__ == "__main__":
     game = Game()
-    game.wait_input()
-    # for _ in range(20):
-    #     choice = game.random_player()
-    #     game.input_pos(choice[0], choice[1])
+    #game.wait_input()
+    for _ in range(15):
+        choice = game.random_player()
+        game.input_pos(choice[0], choice[1])

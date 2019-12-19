@@ -10,3 +10,8 @@ TD_learning/train_data
 TD_learning/network
 cnn/input/
 cnn/network
+PG/.DS_Store
+PG/__pycache__/
+TD_learning/__pycache__/
+TD_learning/.DS_Store
+

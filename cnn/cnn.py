@@ -23,22 +23,24 @@ class Net(nn.Module):
         super(Net, self).__init__()
         # 1 input image channel, 6 output channels, 3x3 square convolution
         # kernel
-        self.conv1 = nn.Conv2d(NUM_OF_COLOR + 1, 28, 3, padding=1)
+        self.conv1 = nn.Conv2d(NUM_OF_COLOR + 1, 14, 3, padding=1)
+        torch.nn.init.xavier_uniform(self.conv1.weight)
         #self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(28, 56, 3, padding=1)
+        #self.conv2 = nn.Conv2d(28, 56, 3, padding=1)
 
         #self.conv3 = nn.Conv2d(56, 128, 3, padding=1)
         # an affine operation: y = Wx + b
-        self.fc1 = nn.Linear(56 * ROW_DIM * COLUMN_DIM, 128)
-        self.fc2 = nn.Linear(128, 32)
-        self.fc3 = nn.Linear(32, 5)
+        self.fc1 = nn.Linear(14 * ROW_DIM * COLUMN_DIM, 500)
+        torch.nn.init.xavier_uniform(self.fc1.weight)
+        self.fc2 = nn.Linear(500, 128)
+        self.fc3 = nn.Linear(128, 5)
 
     def forward(self, x):
         # Max pooling over a (2, 2) window
         x = F.relu(self.conv1(x))
         #x = self.pool(x)
         # If the size is a square you can only specify a single number
-        x = F.relu(self.conv2(x))
+        #x = F.relu(self.conv2(x))
         #print(x.shape)
         x = x.view(-1, self.num_flat_features(x))
         x = F.relu(self.fc1(x))
@@ -79,7 +81,7 @@ if __name__ == "__main__":
 
     criterion = nn.CrossEntropyLoss()
     #criterion = nn.MSELoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    optimizer = optim.SGD(net.parameters(), lr=0.0001, momentum=0.9)
 
 
     if MODE != "testonly":

@@ -15,14 +15,15 @@ TOTAL_EPOCH = 2
 NUM_OF_COLOR = Parameter.NUM_OF_COLOR
 ROW_DIM = Parameter.ROW_DIM
 COLUMN_DIM = Parameter.COLUMN_DIM
-MAX_POSSIBLE_MOVE = ROW_DIM * COLUMN_DIM
+MAX_POSSIBLE_MOVE = ROW_DIM * (COLUMN_DIM - 1)
+
 class Net(nn.Module):
 
     def __init__(self):
         super(Net, self).__init__()
         # 1 input image channel, 6 output channels, 3x3 square convolution
         # kernel
-        self.conv1 = nn.Conv2d(NUM_OF_COLOR + 1, 14, 3, padding=1)
+        self.conv1 = nn.Conv2d(NUM_OF_COLOR, 14, 3, padding=1)
         torch.nn.init.xavier_uniform(self.conv1.weight)
         #self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(14, 28, 3, padding=1)
@@ -32,25 +33,33 @@ class Net(nn.Module):
 
         #self.conv3 = nn.Conv2d(56, 128, 3, padding=1)
         # an affine operation: y = Wx + b
-        self.fc1 = nn.Linear(14 * ROW_DIM * COLUMN_DIM, 144)
+        self.fc1 = nn.Linear(28 * ROW_DIM * COLUMN_DIM, 144)
         torch.nn.init.xavier_uniform(self.fc1.weight)
         self.fc2 = nn.Linear(144, MAX_POSSIBLE_MOVE)
 
+
+        self.fc3 = nn.Linear(144, 1)
+
+
+        #self.criterion = nn.MSELoss()
+        self.optimizer = optim.SGD(self.parameters(), lr=0.0005, momentum=0.7)
+
     ## action is a onehot tensor
-    def forward(self, x, action):
+    def forward(self, x):
+
         # Max pooling over a (2, 2) window
         x = F.relu(self.conv1(x))
         #x = self.pool(x)
         # If the size is a square you can only specify a single number
-        #x = F.relu(self.conv2(x))
+        x = F.relu(self.conv2(x))
         #x = F.relu(self.conv3(x))
         #print(x.shape)
         x = x.view(-1, self.num_flat_features(x))
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = x * action
 
-        return x
+        x = F.relu(self.fc1(x))
+        pis = F.relu(self.fc2(x))
+        vs = F.relu(self.fc3(x))
+        return pis, vs
 
     def num_flat_features(self, x):
         size = x.size()[1:]  # all dimensions except the batch dimension
@@ -60,29 +69,37 @@ class Net(nn.Module):
         return num_features
 
 
-def train(total_epoch, current_states, actions, targets, net, criterion, optimizer):
-    running_loss = 0.0
-    for epoch in range(total_epoch):
+    ## action is in respective of the network
+    def train(self, all_states, all_actions, all_pis, all_rewards):
+        data_loader = DataLoader(all_states, all_actions, all_pis, all_rewards, labels_type="float")
+        trainloader = data_loader.get_trainloader()
+        testloader = data_loader.get_testloader()
 
-        # get the inputs; data is a list of [inputs, labels]
+        running_loss = 0.0
 
-        # zero the parameter gradients
-        optimizer.zero_grad()
+        for epoch in range(TOTAL_EPOCH):
+            for i, data in enumerate(trainloader, 0):
+                # get the inputs; data is a list of [inputs, labels, actions, pis]
+                states, rewards, actions, pis = data
+                # zero the parameter gradients
+                self.optimizer.zero_grad()
 
-        # forward + backward + optimize
-        outputs = net(current_states, actions)
-        outputs = outputs * actions
-        for i, value in enumerate(outputs[0]):
-            if value > 0:
-                print(i, value)
-        loss = criterion(outputs, targets)
-        loss.backward(retain_graph=True)
-        optimizer.step()
+                # forward + backward + optimize
+                probi, v = self.forward(states)
+                action_log_probs = probi.log().gather(1, actions.view(len(actions), -1))
 
-        # print statistics
-        running_loss += loss.item()
+                critic = (v - rewards).pow(2).mean()
+                actor = -(pis * action_log_probs).mean()
+                loss = critic + actor
+                loss.backward(retain_graph=True)
+                self.optimizer.step()
 
-    #print('loss: %.3f' % (running_loss / len(current_states)))
+                # print statistics
+                running_loss += loss.item()
+                if i % 500 == 499:    # print every 500 mini-batches
+                    print('[%d, %5d] loss: %.3f' %
+                          (epoch + 1, i + 1, running_loss / 500))
+                    running_loss = 0.0
 
 
 

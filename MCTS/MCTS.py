@@ -11,7 +11,8 @@ from Inferencer import Inferencer
 #small_inferencer = Inferencer("/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/network/network4.pth", True)
 #big_inferencer = Inferencer("/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/network/network3.pth", False)
 #MAX_ROUND_NUMBER = 8
-MAX_ROUND_NUMBER = 3
+MAX_ROUND_NUMBER = 4
+MAX_ROLLOUT_ROUND_NUMBER = 3
 class Node:
     def __init__(self, state, parent = None):
         self.parent = parent
@@ -40,9 +41,14 @@ class State:
             self.choice_id = None
         self.action_reward = action_reward
 
-    def is_terminal(self):
+    def is_terminal(self, rollout=False):
         ## Add one more case - check is there any possible move?
-        if self.current_round_index == MAX_ROUND_NUMBER:
+        if not rollout:
+            max_round = MAX_ROUND_NUMBER
+        else:
+            max_round = MAX_ROLLOUT_ROUND_NUMBER
+
+        if self.current_round_index == max_round:
             return True
         elif self.num_available_choices == 0:
             return True
@@ -201,7 +207,7 @@ def best_child(node, is_exploration):
       score = left + C * math.sqrt(right)
     else:
       score = sub_node.visited_times
-
+      #score = sub_node.quality_value
 
     if score > best_score:
       best_sub_node = sub_node
@@ -227,9 +233,10 @@ def backup(node, reward):
         node = node.parent
 
 
+
 def monte_carlo_tree_search(node):
 
-    computation_budget = 600
+    computation_budget = 150
 
     # Run as much as possible under the computation budget
     for i in range(computation_budget):
@@ -268,7 +275,7 @@ if __name__ == "__main__":
 
     gameplay.gameboard.print_board()
 
-    for i in range(70):
+    for i in range(30):
         if i % MAX_ROUND_NUMBER == 0:
             num_available_choices = len(gameplay.gameboard.get_available_choices())
             init_state = State(gameplay.gameboard.board, 0, [], num_available_choices)
