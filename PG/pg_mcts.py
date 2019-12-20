@@ -430,7 +430,7 @@ def policy_iteration(start_iteration=0):
         print("Finish " + str((i + 1) * EPISODE_PER_ITERATION) + " episode")
         states, actions, pis, rewards = get_batch_from_memory()
         net.train(states, actions, pis, rewards)
-        if i % SAVE_MODEL_PERIOD and i != 0:
+        if i % SAVE_MODEL_PERIOD == 0 and i != 0:
             save_net(net, i)
             save_train_data(replay_memory, i)
 
