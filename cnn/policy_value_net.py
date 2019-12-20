@@ -20,6 +20,7 @@ COLUMN_DIM = Parameter.COLUMN_DIM
 MAX_POSSIBLE_MOVE = ROW_DIM * (COLUMN_DIM - 1)
 
 replay_memory = deque(maxlen = 50000)
+torch.set_num_threads(1)
 
 class Net(nn.Module):
 

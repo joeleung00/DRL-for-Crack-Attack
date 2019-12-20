@@ -15,3 +15,4 @@ PG/__pycache__/
 PG/train_data/
 TD_learning/__pycache__/
 TD_learning/.DS_Store
+PG/create_data.sh
