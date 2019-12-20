@@ -24,15 +24,15 @@ ROW_DIM = Parameter.ROW_DIM
 COLUMN_DIM = Parameter.COLUMN_DIM
 
 C = 10
-MAX_ROUND_NUMBER = 10
+MAX_ROUND_NUMBER = Parameter.MAX_ROUND_NUMBER
 TAU = 0.2 ## cannot be zero
 MAX_ROLLOUT_ROUND_NUMBER = 3
 GAMMA_RATE = 1
 ## train an episode per iteration
 TRAIN_ITERATION = 10000
-EPISODE_PER_ITERATION = 150
+EPISODE_PER_ITERATION = 10
 SAVE_MODEL_PERIOD = 1000
-DATA_SIZE_PER_TRAIN = 1000
+DATA_SIZE_PER_TRAIN = 100
 NUM_OF_PROCESSES = Parameter.NUM_OF_PROCESSES
 
 
@@ -397,24 +397,6 @@ def get_batch_from_memory():
     ## return data are all ten
     return (states, actions, pis, rewards)
 
-
-def policy_iteration(start_iteration=0):
-    ## list of [state, action, pi, reward]
-    pool = multiprocessing.Pool(processes = NUM_OF_PROCESSES)
-    for i in range(start_iteration, TRAIN_ITERATION):
-        # for j in range(EPISODE_PER_ITERATION):
-        #     train_data = run_episode()
-        train_data = pool.map(run_episode, range(EPISODE_PER_ITERATION))
-        for value in train_data:
-            replay_memory.extend(value)
-        print("Finish " + str((i + 1) * EPISODE_PER_ITERATION) + " episode")
-        states, actions, pis, rewards = get_batch_from_memory()
-        net.train(states, actions, pis, rewards)
-        if i % SAVE_MODEL_PERIOD and i != 0:
-            save_net(net, i)
-            save_train_data(replay_memory, i)
-
-
 def init_first_node(gameboard):
     num_available_choices = len(gameboard.get_available_choices())
     init_state = State(gameboard.board, 0, [], num_available_choices)
@@ -433,7 +415,33 @@ def init_first_node(gameboard):
     root_node.quality_value = v.item()
     return root_node
 
-def run_episode(useless):
+
+
+def policy_iteration(start_iteration=0):
+    ## list of [state, action, pi, reward]
+    pool = multiprocessing.Pool(processes = NUM_OF_PROCESSES)
+    for i in range(start_iteration, TRAIN_ITERATION):
+        # for j in range(EPISODE_PER_ITERATION):
+        #     train_data = run_episode()
+        train_data = pool.map(thread_thunk, range(NUM_OF_PROCESSES))
+        for value in train_data:
+            replay_memory.extend(value)
+        print(len(replay_memory))
+        print("Finish " + str((i + 1) * EPISODE_PER_ITERATION) + " episode")
+        states, actions, pis, rewards = get_batch_from_memory()
+        net.train(states, actions, pis, rewards)
+        if i % SAVE_MODEL_PERIOD and i != 0:
+            save_net(net, i)
+            save_train_data(replay_memory, i)
+
+
+def thread_thunk(useless):
+    train_data = []
+    for i in range(EPISODE_PER_ITERATION // NUM_OF_PROCESSES):
+        train_data.extend(run_episode())
+    return train_data
+
+def run_episode():
     train_data = []
     game = Game(show = False)
 

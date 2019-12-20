@@ -5,3 +5,5 @@ class Parameter:
     INIT_HEIGHT = 6
     BATCH_SIZE = 32
     NUM_OF_PROCESSES = 2
+    GAMEOVER_ROUND = 10
+    MAX_ROUND_NUMBER = 10 ## for MCTS deep

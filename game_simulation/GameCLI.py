@@ -1,10 +1,11 @@
 from GameBoard import GameBoard
 import random
+from parameters import Parameter
 class Game:
 
     def __init__(self, filename = None, show=True):
         self.gameboard = GameBoard(filename = filename)
-        self.gameover_round = 10
+        self.gameover_round = Parameter.GAMEOVER_ROUND
         self.show = show
         #self.gameboard.init_board()
 
