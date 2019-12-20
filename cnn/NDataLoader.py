@@ -1,4 +1,6 @@
 import torch
+import sys
+sys.path.insert(1, '../game_simulation')
 import torch.utils.data as Data
 from torch.utils.data.sampler import SubsetRandomSampler
 import numpy as np

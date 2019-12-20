@@ -1,21 +1,25 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from DataLoader import DataLoader
+from NDataLoader import DataLoader
 import torch.optim as optim
-
-
+import pickle
+from collections import deque
+import numpy as np
 import sys
+from copy import copy, deepcopy
 sys.path.insert(1, '../game_simulation')
 from parameters import Parameter
 ## image size is 12 * 6
-
+train_data_path = "/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/PG/train_data/"
 PATH = './network/network6.pth'
 TOTAL_EPOCH = 2
 NUM_OF_COLOR = Parameter.NUM_OF_COLOR
 ROW_DIM = Parameter.ROW_DIM
 COLUMN_DIM = Parameter.COLUMN_DIM
 MAX_POSSIBLE_MOVE = ROW_DIM * (COLUMN_DIM - 1)
+
+replay_memory = deque(maxlen = 50000)
 
 class Net(nn.Module):
 
@@ -59,7 +63,7 @@ class Net(nn.Module):
         x = F.relu(self.fc1(x))
         pis = F.relu(self.fc2(x))
         vs = F.relu(self.fc3(x))
-        return pis, vs
+        return F.softmax(pis, dim=1), vs
 
     def num_flat_features(self, x):
         size = x.size()[1:]  # all dimensions except the batch dimension
@@ -71,12 +75,13 @@ class Net(nn.Module):
 
     ## action is in respective of the network
     def train(self, all_states, all_actions, all_pis, all_rewards):
-        data_loader = DataLoader(all_states, all_actions, all_pis, all_rewards, labels_type="float")
+        data_loader = DataLoader(all_states, all_actions, all_pis, all_rewards)
         trainloader = data_loader.get_trainloader()
         testloader = data_loader.get_testloader()
-
+        batch_size = data_loader.batch_size
+        data_size = len(all_actions)
+        min_batch_per_look = data_size // batch_size // 4
         running_loss = 0.0
-
         for epoch in range(TOTAL_EPOCH):
             for i, data in enumerate(trainloader, 0):
                 # get the inputs; data is a list of [inputs, labels, actions, pis]
@@ -96,12 +101,68 @@ class Net(nn.Module):
 
                 # print statistics
                 running_loss += loss.item()
-                if i % 500 == 499:    # print every 500 mini-batches
+                if i % min_batch_per_look == min_batch_per_look - 1:    # print every 500 mini-batches
                     print('[%d, %5d] loss: %.3f' %
-                          (epoch + 1, i + 1, running_loss / 500))
+                          (epoch + 1, i + 1, running_loss / min_batch_per_look))
                     running_loss = 0.0
 
+        test_loss = 0
+        count = 0
+        show_count = 0
+        show_target = 20
+        with torch.no_grad():
+            for i, data in enumerate(testloader, 0):
+                states, rewards, actions, pis = data
 
+                probi, v = self.forward(states)
+
+                action_log_probs = probi.log().gather(1, actions.view(len(actions), -1))
+
+                critic = (v - rewards).pow(2).mean()
+                actor = -(pis * action_log_probs).mean()
+
+                loss = critic + actor
+
+                test_loss += loss.item()
+                count += 1
+                if show_count < show_target:
+                    print("reward: ")
+                    print(rewards)
+                    print("v: ")
+                    print(v)
+
+                    print("actor: ")
+                    print(actor)
+                    show_count += 1
+
+            print("total loss: " + str(test_loss / count))
+
+
+
+def get_batch_from_memory():
+    ## min_batch are all python data type (state, pi, reward)
+    train_data = replay_memory
+
+    ## they are batch states
+    states = np.zeros((len(train_data), ROW_DIM, COLUMN_DIM)).astype(int)
+    actions = []
+    pis = []
+    rewards = []
+    for i, value in enumerate(train_data):
+        states[i] = value[0]
+        actions.append(value[1])
+        pis.append(value[2])
+        rewards.append(value[3])
+
+    print(rewards)
+
+    return (states, actions, pis, rewards)
+
+def load_train_data(number):
+    global replay_memory
+    fullpathname = train_data_path + "data" + str(number)
+    fd = open(fullpathname, 'rb')
+    replay_memory =  pickle.load(fd)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -113,69 +174,7 @@ if __name__ == "__main__":
         print("enter new or continue or testonly")
         exit(0)
 
-
-    ## input format + loss function
-
-    data_loader = DataLoader(labels_type="float")
-    trainloader = data_loader.get_trainloader()
-    testloader = data_loader.get_testloader()
-
     net = Net()
-    if MODE == "continue" or MODE == "testonly":
-        net.load_state_dict(torch.load(PATH))
-
-    criterion = nn.SmoothL1Loss()
-    #criterion = nn.MSELoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.0005, momentum=0.7)
-
-
-    if MODE != "testonly":
-        for epoch in range(TOTAL_EPOCH):
-            running_loss = 0.0
-            for i, data in enumerate(trainloader, 0):
-                # get the inputs; data is a list of [inputs, labels]
-                features, labels = data
-
-                # zero the parameter gradients
-                optimizer.zero_grad()
-
-                # forward + backward + optimize
-                outputs = net(features)
-                print("output")
-                print(outputs)
-                print("labels")
-                print(labels)
-
-                loss = criterion(outputs, labels.view(len(labels), -1))
-                loss.backward()
-                optimizer.step()
-
-                # print statistics
-                running_loss += loss.item()
-                if i % 500 == 499:    # print every 500 mini-batches
-                    print('[%d, %5d] loss: %.3f' %
-                          (epoch + 1, i + 1, running_loss / 500))
-                    running_loss = 0.0
-
-
-        torch.save(net.state_dict(), PATH)
-
-
-
-    show_target = 20
-    show_count = 0
-    with torch.no_grad():
-        test_loss = 0.0
-        count = 0
-        for data in testloader:
-            images, labels = data
-            outputs = net(images)
-            loss = criterion(outputs, labels)
-            test_loss += loss.item()
-            count += 1
-            if show_count < show_target:
-                print(outputs)
-                print(labels)
-                show_count += 1
-
-        print("total loss: " + str(test_loss / count))
+    load_train_data("10")
+    states, actions, pis, rewards = get_batch_from_memory()
+    net.train(states, actions, pis, rewards)

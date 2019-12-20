@@ -30,9 +30,9 @@ MAX_ROLLOUT_ROUND_NUMBER = 3
 GAMMA_RATE = 1
 ## train an episode per iteration
 TRAIN_ITERATION = 10000
-EPISODE_PER_ITERATION = 10
-SAVE_MODEL_PERIOD = 1000
-DATA_SIZE_PER_TRAIN = 100
+EPISODE_PER_ITERATION = 5
+SAVE_MODEL_PERIOD = 1
+DATA_SIZE_PER_TRAIN = 50
 NUM_OF_PROCESSES = Parameter.NUM_OF_PROCESSES
 
 
@@ -366,11 +366,13 @@ def save_net(net, number):
     net_name = "net" + str(number) + ".pth"
     torch.save(net.state_dict(), network_path + net_name)
 
-def save_train_data(train_data, number):
-    fullpathname = train_data_path + "data" + str(number)
+def save_train_data(train_data, number, name=None):
+    if name == None:
+        fullpathname = train_data_path + "data" + str(number)
+    else:
+        fullpathname = train_data_path + "data_" + name + "_" + str(number)
     fd = open(fullpathname, 'wb')
     pickle.dump(train_data, fd)
-
 
 def load_train_data(number):
     global replay_memory
@@ -426,14 +428,24 @@ def policy_iteration(start_iteration=0):
         train_data = pool.map(thread_thunk, range(NUM_OF_PROCESSES))
         for value in train_data:
             replay_memory.extend(value)
-        print(len(replay_memory))
+        print("size of replay_memory: " + str(len(replay_memory)))
         print("Finish " + str((i + 1) * EPISODE_PER_ITERATION) + " episode")
-        states, actions, pis, rewards = get_batch_from_memory()
-        net.train(states, actions, pis, rewards)
+
+        if len(replay_memory) >= DATA_SIZE_PER_TRAIN:
+            states, actions, pis, rewards = get_batch_from_memory()
+            net.train(states, actions, pis, rewards)
         if i % SAVE_MODEL_PERIOD == 0 and i != 0:
             save_net(net, i)
             save_train_data(replay_memory, i)
 
+def policy_iteration_get_data(name, start_iteration=0):
+    for i in range(start_iteration, TRAIN_ITERATION):
+        for j in range(EPISODE_PER_ITERATION):
+            train_data = run_episode()
+        replay_memory.extend(train_data)
+        print("Finish " + str((i + 1) * EPISODE_PER_ITERATION) + " episode")
+        if i % SAVE_MODEL_PERIOD == 0 and i != 0:
+            save_train_data(replay_memory, i, name)
 
 def thread_thunk(useless):
     train_data = []
@@ -454,29 +466,37 @@ def run_episode():
         choice = current_node.state.get_choice()
         flat_choice = flatten_action(choice)
         net_index =  action_index2net_index(flat_choice)
-        one_data = [game.gameboard.board, net_index, pi, None]
+        one_data = [deepcopy(game.gameboard.board), net_index, pi, 0]
 
         state, reward = game.input_pos(choice[0], choice[1])
         one_data[3] = reward
         train_data.append(one_data)
 
+
     ## correct the reward
     for i in reversed(range(len(train_data) - 1)):
-        train_data[i][3] = GAMMA_RATE * train_data[i + 1][3]
-
+        train_data[i][3] += GAMMA_RATE * train_data[i + 1][3]
     return train_data
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 2  and len(sys.argv) != 3:
         print("enter your mode:")
-        print("new or continue(number)")
+        print("new or continue(number) or getdata name(number)")
         exit(0)
     mode = sys.argv[1]
-    if mode != "new" and not mode.isdigit():
+    if mode != "new" and not mode.isdigit() and mode != "getdata":
         print("Undefined mode!!")
         exit(0)
     if mode == "new":
         policy_iteration()
+    elif mode == "getdata":
+        name = sys.argv[2]
+        if not name.isdigit():
+            print("Undefined name!!")
+            exit(0)
+        policy_iteration_get_data(name)
     else:
+        load_train_data(int(mode))
+        load_net(int(mode))
         policy_iteration(int(mode))
