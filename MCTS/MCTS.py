@@ -12,7 +12,7 @@ from Inferencer import Inferencer
 #big_inferencer = Inferencer("/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/network/network3.pth", False)
 #MAX_ROUND_NUMBER = 8
 MAX_ROUND_NUMBER = 4
-MAX_ROLLOUT_ROUND_NUMBER = 3
+MAX_ROLLOUT_ROUND_NUMBER = 4
 class Node:
     def __init__(self, state, parent = None):
         self.parent = parent
@@ -136,14 +136,14 @@ def default_policy(node):
     simulation_board = GameBoard(current_state.current_board, simulation = True)
 
 
-    while current_state.is_terminal() == False:
+    while current_state.is_terminal(rollout=True) == False:
 
         # Pick one random action to play and get next state
         current_state = current_state.get_next_state_with_random_choice(simulation_board)
 
     final_state_reward = current_state.compute_reward(simulation_board)
 
-
+    
     return final_state_reward #+ additional_score
     ############
 

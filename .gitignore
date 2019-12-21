@@ -13,6 +13,7 @@ cnn/network
 PG/.DS_Store
 PG/__pycache__/
 PG/train_data/
+PG/network/
 TD_learning/__pycache__/
 TD_learning/.DS_Store
 PG/create_data.sh

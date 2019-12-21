@@ -8,7 +8,7 @@ sys.path.insert(1, '../cnn')
 from GameBoard import GameBoard
 from GameCLI import Game
 from parameters import Parameter
-from policy_net import Net
+from policy_value_net import Net
 import pickle
 from collections import deque
 import numpy as np
@@ -23,12 +23,11 @@ NUM_OF_COLOR = Parameter.NUM_OF_COLOR
 ROW_DIM = Parameter.ROW_DIM
 COLUMN_DIM = Parameter.COLUMN_DIM
 
-
-C = 500
+C = 10
 MAX_ROUND_NUMBER = Parameter.MAX_ROUND_NUMBER
-TAU = 0.5 ## cannot be zero
+TAU = 0.2 ## cannot be zero
 MAX_ROLLOUT_ROUND_NUMBER = 3
-GAMMA_RATE = 0.8
+GAMMA_RATE = 1
 ## train an episode per iteration
 TRAIN_ITERATION = 11
 EPISODE_PER_ITERATION = 150
@@ -36,10 +35,8 @@ SAVE_MODEL_PERIOD = 10
 DATA_SIZE_PER_TRAIN = 50
 NUM_OF_PROCESSES = Parameter.NUM_OF_PROCESSES
 
-COMPUTATION_BUDGET = 150
 
-
-replay_memory = deque(maxlen = 100000)
+replay_memory = deque(maxlen = 50000)
 net = Net()
 
 
@@ -98,6 +95,7 @@ class State:
             while flatten_action(random_choice) in exclude:
                 random_choice = random.choice(available_choices)
                 child_id = flatten_action(random_choice)
+
         ## going to create new state
         action_reward = simulation_board.proceed_next_state(random_choice[0], random_choice[1])
         available_choices = simulation_board.get_available_choices()
@@ -162,23 +160,13 @@ def pre_process_features(raw_board):
 
     return onehot
 
-def get_action(current_state):
-    onehot_current_state = pre_process_features(current_state)
-    onehot_current_state = torch.from_numpy(onehot_current_state).type(torch.float32)
-    with torch.no_grad():
-        probi = net(onehot_current_state.unsqueeze(0)) ## output is a qvalue tensor for all actionss(size of  72)
-    value, index = torch.max(probi[0], 0)
-    #print(value)
-
-    return net_index2action_index(index.item())
-
 
 def tree_policy(node):
     # Check if the current node is the leaf node
     while node.state.is_terminal() == False:
 
         if node.is_all_expanded():
-            node = best_child(node, True)
+            node, _ = best_child(node, True)
         else:
             # Return the new sub node
             sub_node = expand(node)
@@ -198,27 +186,20 @@ def default_policy(node):
     ## pre_process_features:
     onehot_board = pre_process_features(current_state.current_board)
     onehot_current_state = torch.from_numpy(onehot_board).type(torch.float32)
-    with torch.no_grad():
-        probi = net(onehot_current_state.unsqueeze(0))
+    probi, v = net(onehot_current_state.unsqueeze(0))
     probi = probi[0]
     for i, value in enumerate(probi):
         action_index = net_index2action_index(i)
         node.policy_probi[action_index] = value.item()
 
-    ## return a rollout value
-    simulation_board = GameBoard(current_state.current_board)
-    for i in range(MAX_ROLLOUT_ROUND_NUMBER):
-        ##pick an action
-        choice = get_action(simulation_board.board)
-        choice2d = deflatten_action(choice)
-        simulation_board.proceed_next_state(choice2d[0], choice2d[1])
-
-    return simulation_board.score
+    return v.item()
 
 
 
 def expand(node):
-
+    """
+    输入一个节点，在该节点上拓展一个新的节点，使用random方法执行Action，返回新增的节点。注意，需要保证新增的节点与其他节点Action不同。
+    """
     child_node_state_set = set()
     for key in node.child:
         child_node_state_set.add(key)
@@ -238,6 +219,9 @@ def expand(node):
 
 
 def best_child(node, is_exploration):
+    """
+    使用UCB算法，权衡exploration和exploitation后选择得分最高的子节点，注意如果是预测阶段直接选择当前Q值得分最高的。
+    """
 
     # TODO: Use the min float value
     best_score = -sys.maxsize
@@ -252,15 +236,13 @@ def best_child(node, is_exploration):
         child_list_index[i] = key
         # Ignore exploration for sinference
         if is_exploration:
-
             # old: UCB = quality / times + C * sqrt(2 * ln(total_times) / times)
             # C = 1 / math.sqrt(2.0)
             # left = sub_node.quality_value / sub_node.visited_times
             # right = 2.0 * math.log(node.visited_times) / sub_node.visited_times
             # score = left + C * math.sqrt(right)
-
-
             ## new: a = argmax(a) quality + C * P(a|s) / (1 + N(a|s))
+
             left = sub_node.quality_value
             right = C * node.policy_probi[key] / (1 + sub_node.visited_times)
             score = left + right
@@ -269,7 +251,9 @@ def best_child(node, is_exploration):
             if score > best_score:
                 best_sub_node = sub_node
                 best_score = score
-
+                #print(best_score)
+                #print("left: " + str(left))
+                #print("right: " + str(right))
 
         else:
             #score = sub_node.visited_times ** (1/TAU)
@@ -290,19 +274,15 @@ def best_child(node, is_exploration):
     # if not is_exploration:
     #     best_sub_node = get_best_child(node)
     if is_exploration:
-        #print(best_score)
-        # if right > 1:
-        #     print("left: " + str(left))
-        #
-        #     print("right: " + str(right))
-        return best_sub_node
+        return best_sub_node, None
     else:
+
         probi /= sum
         best_i = np.random.choice(range(len(probi)), p=probi)
         key = child_list_index[best_i]
         best_sub_node = node.child[key]
-        #print(probi[best_i])
-        return best_sub_node
+
+        return best_sub_node, probi[best_i]
 
 
 def backup(node, reward):
@@ -350,7 +330,7 @@ def backup(node, reward):
 
 def monte_carlo_tree_search(node):
 
-    computation_budget = COMPUTATION_BUDGET
+    computation_budget = 200
 
     # Run as much as possible under the computation budget
     for i in range(computation_budget):
@@ -365,10 +345,10 @@ def monte_carlo_tree_search(node):
         backup(expand_node, reward)
 
     # N. Get the best next node
-    best_next_node = best_child(node, False)
+    best_next_node, pi = best_child(node, False)
     #print("my quality_value :" + str(node.quality_value))
 
-    return best_next_node
+    return best_next_node, pi
 
 def get_best_child(node):
     best_quality_value = -sys.maxsize
@@ -380,7 +360,7 @@ def get_best_child(node):
     return best_child
 
 def load_net(number):
-    net.load_state_dict(torch.load(network_path + "network" + number + ".pth"))
+    net.load_state_dict(torch.load(network_path + "net" + number + ".pth"))
 
 def save_net(net, number):
     net_name = "net" + str(number) + ".pth"
@@ -398,24 +378,26 @@ def load_train_data(number):
     global replay_memory
     fullpathname = train_data_path + "data" + str(number)
     fd = open(fullpathname, 'rb')
-    replay_memory =  pickle.load(fd)
+    return pickle.load(fd)
 
 def get_batch_from_memory():
-    ## min_batch are all python data type (state, action, reward)
+    ## min_batch are all python data type (state, pi, reward)
     train_data = random.sample(replay_memory, DATA_SIZE_PER_TRAIN)
 
     ## they are batch states
     states = np.zeros((DATA_SIZE_PER_TRAIN, ROW_DIM, COLUMN_DIM)).astype(int)
     actions = []
+    pis = []
     rewards = []
     for i, value in enumerate(train_data):
         states[i] = value[0]
         actions.append(value[1])
-        rewards.append(value[2])
+        pis.append(value[2])
+        rewards.append(value[3])
 
 
     ## return data are all ten
-    return (states, actions, rewards)
+    return (states, actions, pis, rewards)
 
 def init_first_node(gameboard):
     num_available_choices = len(gameboard.get_available_choices())
@@ -425,22 +407,20 @@ def init_first_node(gameboard):
 
     onehot_board = pre_process_features(gameboard.board)
     onehot_current_state = torch.from_numpy(onehot_board).type(torch.float32)
-    with torch.no_grad():
-        probi = net(onehot_current_state.unsqueeze(0))
+    probi, v = net(onehot_current_state.unsqueeze(0))
     probi = probi[0]
     for i, value in enumerate(probi):
         action_index = net_index2action_index(i)
         root_node.policy_probi[action_index] = value.item()
 
     root_node.visited_times = 1
-    root_node.quality_value = 0
-
+    root_node.quality_value = v.item()
     return root_node
 
 
 
 def policy_iteration(start_iteration=0):
-    ## list of [state, action, reward]
+    ## list of [state, action, pi, reward]
     pool = multiprocessing.Pool(processes = NUM_OF_PROCESSES)
     for i in range(start_iteration, TRAIN_ITERATION):
         # for j in range(EPISODE_PER_ITERATION):
@@ -452,8 +432,8 @@ def policy_iteration(start_iteration=0):
         print("Finish " + str((i + 1) * EPISODE_PER_ITERATION) + " episode")
 
         if len(replay_memory) >= DATA_SIZE_PER_TRAIN:
-            states, actions, rewards = get_batch_from_memory()
-            net.train(states, actions, rewards)
+            states, actions, pis, rewards = get_batch_from_memory()
+            net.train(states, actions, pis, rewards)
         if i % SAVE_MODEL_PERIOD == 0 and i != 0:
             save_net(net, i)
             save_train_data(replay_memory, i)
@@ -481,22 +461,21 @@ def run_episode():
 
     while not game.termination():
 
-        current_node = monte_carlo_tree_search(current_node)
+        current_node, pi = monte_carlo_tree_search(current_node)
 
         choice = current_node.state.get_choice()
         flat_choice = flatten_action(choice)
         net_index =  action_index2net_index(flat_choice)
-        one_data = [deepcopy(game.gameboard.board), net_index, 0]
+        one_data = [deepcopy(game.gameboard.board), net_index, pi, 0]
 
         state, reward = game.input_pos(choice[0], choice[1])
-        one_data[2] = reward
+        one_data[3] = reward
         train_data.append(one_data)
 
 
     ## correct the reward
     for i in reversed(range(len(train_data) - 1)):
-        train_data[i][2] += GAMMA_RATE * train_data[i + 1][2]
-
+        train_data[i][3] += GAMMA_RATE * train_data[i + 1][3]
     return train_data
 
 
@@ -510,7 +489,6 @@ if __name__ == "__main__":
         print("Undefined mode!!")
         exit(0)
     if mode == "new":
-        #load_net("3")
         policy_iteration()
     elif mode == "getdata":
         name = sys.argv[2]

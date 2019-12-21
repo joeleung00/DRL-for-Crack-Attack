@@ -12,7 +12,7 @@ COLUMN_DIM = Parameter.COLUMN_DIM
 BATCH_SIZE = Parameter.BATCH_SIZE
 
 class DataLoader:
-    def __init__(self, states, actions, pis, rewards):
+    def __init__(self, states, actions, rewards):
         self.data_size = len(states)
         self.batch_size = BATCH_SIZE
         self.features = torch.from_numpy(self.to_one_hot(np.array(states))).type(torch.float32)
@@ -20,11 +20,10 @@ class DataLoader:
         self.labels = torch.tensor(rewards).type(torch.float)
 
         self.actions = torch.tensor(actions).type(torch.int64)
-        self.pis = torch.tensor(pis).type(torch.float)
-        self.torch_dataset = Data.TensorDataset(self.features, self.labels, self.actions, self.pis)
+        self.torch_dataset = Data.TensorDataset(self.features, self.labels, self.actions)
         self.num_workers = 2
         self.shuffle_dataset = True
-        self.validation_split = .2
+        self.validation_split = .15
         self.train_sampler = None
         self.test_sampler = None
         self.split_data()

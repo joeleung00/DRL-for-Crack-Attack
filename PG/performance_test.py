@@ -5,9 +5,9 @@ from GameCLI import Game
 from MCTS import *
 from multiprocessing import Process, Lock, Value
 
-NUM_OF_TEST_CASE = 100
-ROUND_PER_EPISODE = 20
-PENALTY_PER_STEP = 1
+NUM_OF_TEST_CASE = 20
+ROUND_PER_EPISODE = 15
+PENALTY_PER_STEP = 0
 NUM_OF_THREAD = 2
 
 lock = Lock()
@@ -48,4 +48,4 @@ for i in range(NUM_OF_THREAD):
 for i in range(NUM_OF_THREAD):
     processes[i].join()
 
-print("Average score per test: " + str(total_score.value / total_test_case.value))
+print("Average score per test per swap: " + str(total_score.value / total_test_case.value / ROUND_PER_EPISODE))
