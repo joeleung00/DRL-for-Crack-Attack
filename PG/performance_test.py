@@ -6,7 +6,7 @@ from MCTS import *
 from multiprocessing import Process, Lock, Value
 
 NUM_OF_TEST_CASE = 20
-ROUND_PER_EPISODE = 15
+ROUND_PER_EPISODE = 10
 PENALTY_PER_STEP = 0
 NUM_OF_THREAD = 2
 

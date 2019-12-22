@@ -19,7 +19,7 @@ ROW_DIM = Parameter.ROW_DIM
 COLUMN_DIM = Parameter.COLUMN_DIM
 MAX_POSSIBLE_MOVE = ROW_DIM * (COLUMN_DIM - 1)
 
-replay_memory = deque(maxlen = 50000)
+replay_memory = deque(maxlen = 500000)
 #torch.set_num_threads(1)
 
 class Net(nn.Module):
@@ -31,17 +31,19 @@ class Net(nn.Module):
         self.trainloader = None
         self.testloader = None
 
-        self.fc1 = nn.Linear(NUM_OF_COLOR * ROW_DIM * COLUMN_DIM, 128)
+        self.conv1 = nn.Conv2d(NUM_OF_COLOR, 54, 3, padding=1)
 
-        self.fc2 = nn.Linear(256, 128)
+        self.fc1 = nn.Linear(54 * ROW_DIM * COLUMN_DIM, 128)
+
+        self.fc2 = nn.Linear(1024, 512)
 
         self.fc3 = nn.Linear(128, MAX_POSSIBLE_MOVE)
 
-        self.optimizer = optim.SGD(self.parameters(), lr=0.005, momentum=0.5)
+        self.optimizer = optim.SGD(self.parameters(), lr=0.0001, momentum=0.5)
 
 
     def forward(self, x):
-
+        x = F.relu(self.conv1(x))
         x = x.view(-1, self.num_flat_features(x))
 
         x = F.relu(self.fc1(x))
@@ -145,7 +147,7 @@ def get_batch_from_memory():
 
 def load_train_data():
     global replay_memory
-    fullpathname = train_data_path + "full_data"
+    fullpathname = train_data_path + "full_data_test"
     fd = open(fullpathname, 'rb')
     replay_memory =  pickle.load(fd)
 
@@ -165,5 +167,5 @@ if __name__ == "__main__":
     #print(len(replay_memory))
     #print(replay_memory[10])
     states, actions, rewards = get_batch_from_memory()
-    net.train(states, actions, rewards, "network3.pth")
+    net.train(states, actions, rewards, "network_test.pth")
     net.test()

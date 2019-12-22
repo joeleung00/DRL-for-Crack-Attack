@@ -11,8 +11,8 @@ from Inferencer import Inferencer
 #small_inferencer = Inferencer("/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/network/network4.pth", True)
 #big_inferencer = Inferencer("/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/network/network3.pth", False)
 #MAX_ROUND_NUMBER = 8
-MAX_ROUND_NUMBER = 4
-MAX_ROLLOUT_ROUND_NUMBER = 4
+MAX_ROUND_NUMBER = 3
+MAX_ROLLOUT_ROUND_NUMBER = 3
 class Node:
     def __init__(self, state, parent = None):
         self.parent = parent
@@ -127,7 +127,7 @@ def default_policy(node):
 
     #############
     ## Then add the inferencing score
-    # big_score = big_inferencer.inference(current_state.current_board)
+    #big_score = big_inferencer.inference(current_state.current_board)
     # small_score = small_inferencer.inference(current_state.current_board)
     # return big_score + small_score
     #############
@@ -143,8 +143,8 @@ def default_policy(node):
 
     final_state_reward = current_state.compute_reward(simulation_board)
 
-    
-    return final_state_reward #+ additional_score
+
+    return final_state_reward #+ big_score
     ############
 
     # simulation_board = GameBoard(current_state.current_board, simulation = True)

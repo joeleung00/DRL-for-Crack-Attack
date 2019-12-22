@@ -141,8 +141,8 @@ if __name__ == "__main__":
         current_time = time.time()
         time_interval = current_time - previous_time
         print(time_interval)
-        if time_interval < 1.25:
-            time.sleep(1.25 - time_interval)
+        if time_interval < 1:
+            time.sleep(1 - time_interval)
 
         previous_time = time.time()
 

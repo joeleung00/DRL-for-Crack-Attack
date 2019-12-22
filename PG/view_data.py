@@ -11,5 +11,8 @@ def load_train_data(number, name):
 	fd = open(fullpathname, 'rb')
 	return pickle.load(fd)
 
-replay_memory = load_train_data(1, "1")
+#replay_memory = load_train_data(1, "1")
+fd = open("./train_data/full_data2", 'rb')
+replay_memory = pickle.load(fd)
 print(len(replay_memory))
+print(replay_memory[10])

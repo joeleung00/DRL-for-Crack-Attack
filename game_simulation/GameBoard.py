@@ -222,8 +222,9 @@ class GameBoard:
         diff = self.height - new_height
         self.height = new_height
         if self.simulation == True:
+            self.score += (total_score_gain + 30 * diff)
             #self.score += (total_score_gain + 30 * diff)* math.exp(-0.8 * self.round_index)
-            self.score += total_score_gain - Step_penalty #(total_score_gain + 30 * diff)  #* math.exp(-0.2 * self.round_index)
+            #self.score += total_score_gain - Step_penalty #(total_score_gain + 30 * diff)  #* math.exp(-0.2 * self.round_index)
         else:
             self.score += total_score_gain - Step_penalty
         self.round_index += 1

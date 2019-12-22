@@ -91,7 +91,7 @@ class Game:
         #     new_row_time = 7
         # else:
         #     new_row_time = 5
-        new_row_time = 3.8
+        new_row_time = 2
 
         frame_dist = int (new_row_time * FPS / cell_size)
         if frame_index % frame_dist == 0:
@@ -160,7 +160,7 @@ class Game:
                         #pygame.time.wait(200)
 
 
-            if self.gameboard.score > 10 and self.stable_mode == True:
+            if self.gameboard.score >= 5 and self.stable_mode == True:
                 self.stable_mode = False
                 offset += 1
 
