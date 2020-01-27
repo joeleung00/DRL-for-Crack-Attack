@@ -64,6 +64,6 @@ class Game:
 if __name__ == "__main__":
     game = Game()
     #game.wait_input()
-    for _ in range(15):
+    for _ in range(10):
         choice = game.random_player()
         game.input_pos(choice[0], choice[1])

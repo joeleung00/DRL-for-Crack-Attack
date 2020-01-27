@@ -1,0 +1,3 @@
+1.full_data_6color: csv file, 12 * 6 (color), last one is the score
+2.full_data_6color_onehot: numpy file, 7 * 12 * 6 (one hot color), last one is bucket score. 0: 0 - 29, 1: 30 - 59, 2: 60 - 89 etc
+3.full_data_6color_score: numpy file, 7 * 12 * 6 (one hot color), last one is the score % 30 with bins[3,6,9,12] 

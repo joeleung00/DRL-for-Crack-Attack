@@ -11,8 +11,8 @@ import sys
 from parameters import Parameter
 ## image size is 12 * 6
 ## one max pool 6 * 3
-PATH = './network/network5.pth'
-TOTAL_EPOCH = 2
+PATH = './network/network10.pth'
+TOTAL_EPOCH = 8
 NUM_OF_COLOR = Parameter.NUM_OF_COLOR
 ROW_DIM = Parameter.ROW_DIM
 COLUMN_DIM = Parameter.COLUMN_DIM
@@ -23,7 +23,7 @@ class Net(nn.Module):
         super(Net, self).__init__()
         # 1 input image channel, 6 output channels, 3x3 square convolution
         # kernel
-        self.conv1 = nn.Conv2d(NUM_OF_COLOR + 1, 28, 3, padding=1)
+        self.conv1 = nn.Conv2d(NUM_OF_COLOR + 1 + 3, 28, 3, padding=1)
         #self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(28, 56, 3, padding=1)
 
@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
     criterion = nn.CrossEntropyLoss()
     #criterion = nn.MSELoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.0001, momentum=0.9)
+    optimizer = optim.SGD(net.parameters(), lr=0.0005, momentum=0.8)
 
 
     if MODE != "testonly":
@@ -115,11 +115,14 @@ if __name__ == "__main__":
     total = 0
     pre = []
     lab = []
+    test_loss = 0
     with torch.no_grad():
         print("Start testing")
         for data in testloader:
             images, labels = data
             outputs = net(images)
+            loss = criterion(outputs, labels)
+            test_loss += loss.item()
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
@@ -128,7 +131,7 @@ if __name__ == "__main__":
             for i in range(len(labels)):
                 pre.append(predicted[i].item())
                 lab.append(labels[i].item())
-
+    print("test loss: " + str(test_loss / total))
     print('Accuracy on test images: %d %%' % (
         100 * correct / total))
 

@@ -44,10 +44,11 @@ def get_action(current_state):
     onehot_current_state = pre_process_features(current_state)
     onehot_current_state = torch.from_numpy(onehot_current_state).type(torch.float32)
     probi, _ = net(onehot_current_state.unsqueeze(0)) ## output is a qvalue tensor for all actionss(size of  72)
-    value, index = torch.max(probi[0], 0)
+    probi = probi[0]
+    #index = np.random.choice(range(len(probi)), p=probi.detach().numpy())
+    value, index = torch.max(probi, 0)
     print(value)
-
-    return net_index2action_index(index.item())
+    return net_index2action_index(index)
 
 def play(mode):
 

@@ -8,7 +8,6 @@ MCTS/__pycache__/
 cnn/__pycache__/
 TD_learning/train_data
 TD_learning/network
-cnn/input/
 cnn/network
 PG/.DS_Store
 PG/__pycache__/

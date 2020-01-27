@@ -275,7 +275,7 @@ if __name__ == "__main__":
 
     gameplay.gameboard.print_board()
 
-    for i in range(30):
+    for i in range(10):
         if i % MAX_ROUND_NUMBER == 0:
             num_available_choices = len(gameplay.gameboard.get_available_choices())
             init_state = State(gameplay.gameboard.board, 0, [], num_available_choices)

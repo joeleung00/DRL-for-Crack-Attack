@@ -2,7 +2,7 @@ import numpy as np
 import sys
 sys.path.insert(1, '../game_simulation')
 from parameters import Parameter
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 NUM_OF_COLOR = Parameter.NUM_OF_COLOR
 ROW_DIM = Parameter.ROW_DIM
@@ -21,6 +21,6 @@ features = features.reshape(-1, ROW_DIM, COLUMN_DIM)
 #np.savez("./input/full_data_6color_small.npz", features=features, labels=labels)
 
 #
-_ = plt.hist(labels, bins='auto')
-plt.title("Histogram with 'auto' bins")
-plt.show()
+# _ = plt.hist(labels, bins='auto')
+# plt.title("Histogram with 'auto' bins")
+# plt.show()
