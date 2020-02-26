@@ -5,6 +5,7 @@ import numpy as np
 import sys
 sys.path.insert(1, '../game_simulation')
 from parameters import Parameter
+import features_extraction as fe
 #data = np.load("/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/input/full_data_6color_onehot.npz")
 data = np.load("./input/full_data_6color_small.npz")
 npfeatures = data["features"]
@@ -20,6 +21,9 @@ class DataLoader:
 		self.features = torch.from_numpy(self.to_one_hot()).type(torch.float32)
 		new_features = np.array(list(map(self.preprocess, npfeatures)))
 		new_features = torch.from_numpy(new_features).type(torch.float32).view(self.data_size, 3, ROW_DIM, COLUMN_DIM)
+
+		# new_features = np.array(list(map(fe.get_score_vector, npfeatures)))
+		# self.features = torch.from_numpy(new_features).type(torch.float32)
 
 		self.features = torch.cat((self.features, new_features), axis=1)
 		#new_features = np.array(list(map(self.preprocess, npfeatures)))

@@ -6,7 +6,8 @@ import sys
 sys.path.insert(1, '../game_simulation')
 from GameBoard import GameBoard
 from GameCLI import Game
-from Inferencer import Inferencer
+import features_extraction as fe
+#from Inferencer import Inferencer
 
 #small_inferencer = Inferencer("/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/network/network4.pth", True)
 #big_inferencer = Inferencer("/Users/joeleung/Documents/CUHK/yr4_term1/csfyp/csfyp/cnn/network/network3.pth", False)
@@ -59,8 +60,9 @@ class State:
         return row * 10 + col
 
     def compute_reward(self, simulation_board):
-        return simulation_board.score
-
+        #tmp = fe.get_one_score(simulation_board.board)
+        return simulation_board.score #+ tmp
+        #return fe.get_one_score(simulation_board.board)
     # def set_num_available_choices(self):
     #     gameboard.board = self.board
     #     available_choices = gameboard.get_available_choices()
@@ -133,16 +135,16 @@ def default_policy(node):
     #############
 
     ############
-    simulation_board = GameBoard(current_state.current_board, simulation = True)
-
-
-    while current_state.is_terminal(rollout=True) == False:
-
-        # Pick one random action to play and get next state
-        current_state = current_state.get_next_state_with_random_choice(simulation_board)
-
-    final_state_reward = current_state.compute_reward(simulation_board)
-
+    # simulation_board = GameBoard(current_state.current_board, simulation = True)
+    #
+    #
+    # while current_state.is_terminal(rollout=True) == False:
+    #
+    #     # Pick one random action to play and get next state
+    #     current_state = current_state.get_next_state_with_random_choice(simulation_board)
+    #
+    # final_state_reward = current_state.compute_reward(simulation_board)
+    final_state_reward = fe.get_one_score(current_state.current_board)
 
     return final_state_reward #+ big_score
     ############
@@ -224,13 +226,22 @@ def backup(node, reward):
         node.visited_times += 1
 
         # Update the quality value
-        total_reward = reward + node.state.action_reward
+        #total_reward = reward + node.state.action_reward
+        total_reward = reward
         if total_reward > node.quality_value:
             node.quality_value = total_reward
 
         reward = node.quality_value
         # Change the node to the parent node
         node = node.parent
+
+# def backup(node, reward):
+#     while node != None:
+#         node.visited_times += 1
+#         total_reward = reward + node.state.action_reward
+#         node.quality_value += 1.5/node.visited_times * (total_reward - node.quality_value)
+#         reward = node.quality_value
+#         node = node.parent
 
 
 
@@ -302,3 +313,5 @@ if __name__ == "__main__":
         if gameplay.gameboard.score >= 60 or i == 69:
             print("Score per round: %f" % (gameplay.gameboard.score / i))
             break
+
+    print(gameplay.gameboard.score)
