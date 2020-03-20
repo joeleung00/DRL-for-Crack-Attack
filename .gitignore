@@ -16,3 +16,8 @@ PG/network/
 TD_learning/__pycache__/
 TD_learning/.DS_Store
 PG/create_data.sh
+*/input
+*/output
+*/network
+model-base/
+*/__pycache__/

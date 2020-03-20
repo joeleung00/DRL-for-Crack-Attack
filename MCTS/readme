@@ -1,3 +1,6 @@
 19 for fe + max backup
 21 for no fe and max backup
 20 for average backup
+22 for average backup and 300 compute budget
+17 for fe + 50 compute budget and average
+18 for  50 compute budget and average

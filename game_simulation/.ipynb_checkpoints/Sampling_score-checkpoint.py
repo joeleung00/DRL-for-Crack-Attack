@@ -5,7 +5,7 @@ sys.path.insert(1, '../MCTS')
 from MCTS import *
 
 ROUND_PER_ROW = 2
-TARGET_COUNT = 10000
+TARGET_COUNT = int(sys.argv[2])
 filepath = "./output/data" + sys.argv[1]
 class Game:
 
@@ -25,7 +25,6 @@ class Game:
         self.gameboard.proceed_next_state(int(x), int(y))
         self.gameboard.get_new_row()
         #self.gameboard.print_board()
-        
 
 
     def insert_row_to_board(self):
@@ -35,26 +34,27 @@ class Game:
         self.gameboard.height += 1
 
 
-def write_to_file(f, board, value):
+def write_to_file(f, value):
 
     output_string = ""
-    m = len(board)
-    n = len(board[0])
-    for i in range(m):
-        for j in range(n):
-            output_string += str(board[i][j]) + ","
     output_string += str(value) + "\n"
     f.write(output_string)
 
 
 
 if __name__ == "__main__":
-    f = open(filepath, "a")
+    if len(sys.argv) != 3:
+        print("enter name num_of_test_case")
+        exit(0)
+    if not sys.argv[2].isdigit():
+        print("wrong number")
+        exit(0)
+    f = open(filepath, "w")
     data_count = 0
     while data_count < TARGET_COUNT:
         game = Game()
         gameover = False
-        round = 0
+
         while not gameover:
             # mcts_read_board(game.gameboard.board):
             num_available_choices = len(game.gameboard.get_available_choices())
@@ -65,15 +65,12 @@ if __name__ == "__main__":
             for i in range(ROUND_PER_ROW):
                 current_node = monte_carlo_tree_search(current_node)
                 choice = current_node.state.get_choice()
-                if i == 0 and round % 3 == 0:
-                    sampling_board = current_node.state.current_board
-                    sampling_value = current_node.quality_value
-                    write_to_file(f, sampling_board, sampling_value)
-                    data_count += 1
                 game.input_pos(choice[0], choice[1])
 
-            round += 1
             game.insert_row_to_board()
             if(game.gameboard.board[0]!=game.gameboard.empty_row):
                 gameover = True
+                sampling_value = game.gameboard.score
+                write_to_file(f, sampling_value)
+                data_count += 1
     f.close()
