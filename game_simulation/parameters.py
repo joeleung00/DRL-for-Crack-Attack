@@ -1,6 +1,6 @@
 class Parameter:
     NUM_OF_COLOR = 4
-    ROW_DIM = 6
+    ROW_DIM = 12
     COLUMN_DIM = 6
     INIT_HEIGHT = 6
     BATCH_SIZE = 32
