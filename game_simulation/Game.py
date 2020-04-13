@@ -175,13 +175,12 @@ class Game:
                     self.gameboard.get_new_row()
                     offset += 1
 
-
-
+            self.gameboard.gravity()
+            self.gameboard.score += self.gameboard.elimination()
 
                 ## read the action queue
 
                 ## pass the action to proceed_next_state
-
 
 
             self.draw_screen(self.gameboard.board, offset,self.gameboard.cursor_pos)
@@ -195,7 +194,8 @@ class Game:
             pygame.display.update()
             if gameover:
                 pygame.time.wait(2000)
-                print("performance: %.2f" % (self.gameboard.score / swap_count))
+                if(swap_count != 0):
+                    print("performance: %.2f" % (self.gameboard.score / swap_count))
 
 
             clock.tick(FPS)
