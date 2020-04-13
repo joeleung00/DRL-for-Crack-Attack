@@ -39,13 +39,19 @@ class DQNAgent:
             Q_values = self.net(onehot_board.unsqueeze(0)) ## output is a qvalue tensor for all actionss(size of  72)
         return Q_values    
         
-    def best_move(self, board, possible_actions):
+    def best_move(self, board, possible_actions=None):
         ## pick best action
         ## current state is not tensor
         Q_values = self.inference(board)
-        Q_values = self.mask_actions(Q_values, possible_actions)
+        if possible_actions != None:
+            Q_values = self.mask_actions(Q_values, possible_actions)
         _, index = torch.max(Q_values[0], 0)
         return deflatten_action(index.item())
+    
+    def get_qvalue_by_action(self, board, action):
+        Q_values = self.inference(board)
+        action_index = flatten_action(action)
+        return Q_values[0][action_index].item()
             
     def get_max_qvalue(self, board):
         Q_values = self.inference(board)
