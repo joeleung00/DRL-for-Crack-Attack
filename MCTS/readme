@@ -4,3 +4,4 @@
 22 for average backup and 300 compute budget
 17 for fe + 50 compute budget and average
 18 for  50 compute budget and average
+47 for 500 gameplay when 20 is the max move limit in MCTS with no other fe or networks

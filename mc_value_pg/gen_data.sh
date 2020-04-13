@@ -1,0 +1,12 @@
+python gen_data.py \
+--total_iterations "1" \
+--step_per_iteration "500000" \
+--output_network "./network/3213.pth" \
+--input_network "./network/train3.pth" \
+--learning_rate "1e-4" \
+--total_epoch "6" \
+--batch_size "256" \
+--gamma "0.6" \
+--MAX_MEMORY_SIZE "2000000" \
+--NUM_OF_PROCESSES "10" \
+--output_data "./50Mdata_pg"

@@ -3,7 +3,7 @@ sys.path.insert(1, '../game_simulation')
 from GameBoard import GameBoard
 from GameCLI import Game
 
-from reward_network import Net
+from resnet import ResidualNet
 import torch
 import numpy as np
 
@@ -15,9 +15,9 @@ ROW_DIM = Parameter.ROW_DIM
 COLUMN_DIM = Parameter.COLUMN_DIM
 ACTION_SIZE = ROW_DIM * COLUMN_DIM
 
-network_path = "./network/n2.pth"
-
-net = Net()
+#network_path = "../TD_learning/network/test.pth"
+network_path = "./network/n4.pth"
+net = ResidualNet(NUM_OF_COLOR, ROW_DIM * COLUMN_DIM, ROW_DIM * COLUMN_DIM, 128)
 
 def deflatten_action(action):
     return action // COLUMN_DIM, action % COLUMN_DIM
@@ -54,7 +54,7 @@ def get_action(current_state):
 
 def play():
     
-    game = Game(show=False)
+    game = Game()
     state = game.gameboard.board
     #game.gameboard.print_board()
     while not game.termination():
@@ -75,5 +75,5 @@ def multiple_games():
     
 
 if __name__ == "__main__":
-
-    multiple_games()
+    play()
+    #multiple_games()

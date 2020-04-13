@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from dataloader import dataloader
 import torch.optim as optim
 import argparse
+from resnet import ResidualNet
 
 import sys
 sys.path.insert(1, '../game_simulation')
@@ -17,7 +18,7 @@ COLUMN_DIM = Parameter.COLUMN_DIM
 torch.set_num_threads(15)
 
 TOTAL_EPOCH = 15
-PATH = "./network/n3.pth"
+PATH = "./network/n4.pth"
 
 
 class Net(nn.Module):
@@ -69,10 +70,10 @@ if __name__ == "__main__":
     dl = dataloader("./output/0.9M_data", 64, seed=12)
     trainloader, testloader = dl.get_loader()
     
-    net = Net()
+    net = ResidualNet(NUM_OF_COLOR, ROW_DIM * COLUMN_DIM, 128, ROW_DIM * COLUMN_DIM)
     #net.load_state_dict(torch.load(PATH))
     
-    #net.cuda()
+    net.cuda()
     
     optimizer = optim.SGD(net.parameters(), lr=0.0005, momentum=0.6)
     
@@ -81,8 +82,8 @@ if __name__ == "__main__":
         for i, data in enumerate(trainloader, 0):
             # get the inputs; data is a list of [inputs, labels]
             features, labels = data
-#             features = features.cuda()
-#             labels = labels.cuda()
+            features = features.cuda()
+            labels = labels.cuda()
             # zero the parameter gradients
             optimizer.zero_grad()
 
@@ -111,8 +112,8 @@ if __name__ == "__main__":
         print("Start testing")
         for data in testloader:
             features, labels = data
-            #features = features.cuda()
-            #labels = labels.cuda()
+            features = features.cuda()
+            labels = labels.cuda()
             
             outputs = net(features)
             loss = torch.pow((outputs - labels), 2).sum(axis=1).mean()

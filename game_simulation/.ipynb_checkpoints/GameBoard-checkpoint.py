@@ -13,7 +13,6 @@ Gray = 5
 RED = 6
 MARKED = 12
 
-Step_penalty = 0
 
 class GameBoard:
     def __init__(self, board = None, simulation = False, filename = None): ## filename is for loading from file
@@ -224,11 +223,11 @@ class GameBoard:
         if self.simulation == True:
             #self.score += (total_score_gain + 30 * diff)
             #self.score += (total_score_gain + 30 * diff)* math.exp(-0.8 * self.round_index)
-            self.score += total_score_gain - Step_penalty #(total_score_gain + 30 * diff)  #* math.exp(-0.2 * self.round_index)
+            self.score += total_score_gain 
         else:
-            self.score += total_score_gain - Step_penalty
+            self.score += total_score_gain
         self.round_index += 1
-        return total_score_gain - Step_penalty
+        return total_score_gain
 
     def get_available_choices(self):
         choices = []
