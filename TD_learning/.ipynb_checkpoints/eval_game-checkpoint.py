@@ -35,6 +35,6 @@ def eval_game(agent, total_num_games):
     
     
 if __name__ == "__main__":
-    agent = DQNAgent(None, debug="./network/test.pth")
-    play(agent, show=True)
-    #eval_game(agent, 500)
+    agent = DQNAgent(None, debug="./network/formal_size1.pth")
+    #play(agent, show=True)
+    eval_game(agent, 100)

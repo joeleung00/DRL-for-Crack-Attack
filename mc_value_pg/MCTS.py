@@ -188,7 +188,7 @@ class MCTS:
     
 if __name__ == "__main__":
     total_score = 0
-    total_game = 300
+    total_game = 3
     for game in range(total_game):
         gameplay = Game(show=False)
         mcts = MCTS(gameplay.gameboard)

@@ -2,6 +2,7 @@ import random
 from copy import copy, deepcopy
 import math
 from parameters import Parameter
+import pygame
 
 EMPTY = -1
 BLUE = 0
@@ -13,7 +14,6 @@ Gray = 5
 RED = 6
 MARKED = 12
 
-Step_penalty = 0
 
 class GameBoard:
     def __init__(self, board = None, simulation = False, filename = None): ## filename is for loading from file
@@ -103,7 +103,7 @@ class GameBoard:
                 cur_row = row
                 cur_col = col
                 if block != EMPTY:
-                    while cur_row < self.row_dim - 1 and self.board[cur_row + 1][cur_col] == EMPTY:
+                    if cur_row < self.row_dim - 1 and self.board[cur_row + 1][cur_col] == EMPTY:
                          self.board[cur_row][cur_col] = EMPTY
                          self.board[cur_row + 1][cur_col] = block
                          cur_row += 1
@@ -158,7 +158,7 @@ class GameBoard:
                     if count >= 3:
                         self.mark_sub(row, col - count + 1, col, marked_board, True)
                 else:
-                    if self.board[row][col + 1] == cur_color:
+                    if self.board[row][col + 1] == cur_color and (row == self.row_dim-1 or (self.board[row+1][col + 1] != EMPTY and self.board[row+1][col] != EMPTY)):
                         count += 1
                     else:
                         if count >= 3:
@@ -191,7 +191,6 @@ class GameBoard:
         self.mark(marked_board)
 
 
-
         for row in range(self.row_dim):
             for col in range(self.column_dim):
                 if marked_board[row][col] == MARKED:
@@ -209,12 +208,12 @@ class GameBoard:
     def proceed_next_state(self, row = None, col = None):
         if row != None and col != None:
             self.swap(row, col)
-        self.gravity()
+        #self.gravity()
         total_score_gain = 0
         while (True):
             score_gain = self.elimination()
             total_score_gain += score_gain
-            self.gravity()
+        #    self.gravity()
             if (score_gain == 0):
                 break
 
@@ -224,11 +223,11 @@ class GameBoard:
         if self.simulation == True:
             #self.score += (total_score_gain + 30 * diff)
             #self.score += (total_score_gain + 30 * diff)* math.exp(-0.8 * self.round_index)
-            self.score += total_score_gain - Step_penalty #(total_score_gain + 30 * diff)  #* math.exp(-0.2 * self.round_index)
+            self.score += total_score_gain 
         else:
-            self.score += total_score_gain - Step_penalty
+            self.score += total_score_gain
         self.round_index += 1
-        return total_score_gain - Step_penalty
+        return total_score_gain
 
     def get_available_choices(self):
         choices = []
