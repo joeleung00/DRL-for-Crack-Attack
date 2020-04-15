@@ -10,6 +10,7 @@ sys.path.insert(1, "../Resnet/")
 from resnet import ResidualNet
 from dataloader import DataLoader
 from utility import *
+import os.path
 
 class DQNAgent:
     def __init__(self, args, debug=False):
@@ -78,8 +79,8 @@ class DQNAgent:
     def MSELoss(self, outputs, labels):
         return torch.pow((outputs - labels), 2).mean()
     
-    def train(self, replay_memory, teacher_agent):
-        dataloader = DataLoader(self.args.batch_size, replay_memory, teacher_agent, self.args.gamma)
+    def train(self, replay_memory, teacher_agent, student_agent):
+        dataloader = DataLoader(self.args.batch_size, replay_memory, teacher_agent, student_agent, self.args.gamma)
         train_loader, test_loader = dataloader.get_loader()
             
         total_loss = 0

@@ -10,9 +10,11 @@ from eval_game import eval_game
 import copy
 import random
 from utility import *
+from torch.multiprocessing import set_start_method
+
 
 ACTION_SIZE = ROW_DIM * COLUMN_DIM
-MAX_REPLAY_MEMORY_SIZE = 100000
+MAX_REPLAY_MEMORY_SIZE = 200000
 TRAINING_DATA_SIZE = 100000
 observation_data = 0
 
@@ -21,8 +23,9 @@ def init_game():
     return game
 
 def td_learning(args):
+    set_start_method('spawn')
     agent = DQNAgent(args)
-    #pre_agent = DQNAgent(args)
+    pre_agent = DQNAgent(args)
     teacher_agent = DQNAgent(args)
     replay_memory = deque(maxlen = MAX_REPLAY_MEMORY_SIZE)
     epsilon = args.initial_epsilon
@@ -43,12 +46,13 @@ def td_learning(args):
                 game = init_game()
         
         if len(replay_memory) >= observation_data:
+            pre_agent =  clone_agent(agent, pre_agent)
             data_size = TRAINING_DATA_SIZE if len(replay_memory) >= TRAINING_DATA_SIZE else len(replay_memory)
-            agent.train(random.sample(replay_memory, data_size), teacher_agent)
-            if epoch > 0 and epoch % 2 == 0:
-                teacher_agent = clone_agent(agent, teacher_agent)
-                #pre_agent =  clone_agent(agent, pre_agent)
-            eval_game(agent, 500)
+            agent.train(random.sample(replay_memory, data_size), teacher_agent, agent)
+            if epoch > 0:
+                teacher_agent = clone_agent(pre_agent, teacher_agent)
+    
+            eval_game(agent, 300)
 
             if epsilon > args.final_epsilon:
                 epsilon -= epsilon_decay

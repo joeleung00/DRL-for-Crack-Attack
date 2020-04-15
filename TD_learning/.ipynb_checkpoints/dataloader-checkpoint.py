@@ -4,13 +4,12 @@ from torch.utils.data.sampler import SubsetRandomSampler
 import numpy as np
 import pickle
 from utility import *
-
+from torch.multiprocessing import Pool, Process
 class DataLoader:
-    def __init__(self, batch_size, replay_memory, teacher_agent, gamma, shuffle=True, split_ratio=0.05, seed=None):
-
+    def __init__(self, batch_size, replay_memory, teacher_agent, student_agent, gamma, shuffle=True, split_ratio=0.05, seed=None):
         self.raw_data = replay_memory
         self.gamma = gamma
-        tensor_data = self.create_tensor_data(replay_memory, teacher_agent)
+        tensor_data = self.thread_create_tensor_data(replay_memory, teacher_agent, student_agent, 10)
         features, labels, actions = tensor_data
         self.tensor_data = Data.TensorDataset(features, labels, actions)
         
@@ -58,22 +57,52 @@ class DataLoader:
         test_sampler = SubsetRandomSampler(val_indices)
         return train_sampler, test_sampler
     
+    def gen_args(self, replay_memory, teacher_agent, student_agent, num_threads):
+        a = []
+        ave_workload = len(replay_memory) // num_threads + 1
+        for i in range(num_threads):
+            start = i * ave_workload
+            end = min((i + 1) * ave_workload, len(replay_memory))
+            a.append((replay_memory[start:end], teacher_agent, student_agent))
+        return a
     
-    def create_tensor_data(self, replay_memory, teacher_agent):
+    def combine_result(self, tmp_result):
+        tensor_features = tmp_result[0][0]
+        tensor_labels = tmp_result[0][1]
+        tensor_actions = tmp_result[0][2]
+        for i in range(1, len(tmp_result)):
+            tensor_features = torch.cat((tensor_features, tmp_result[i][0]), 0)
+            tensor_labels = torch.cat((tensor_labels, tmp_result[i][1]), 0)
+            tensor_actions = torch.cat((tensor_actions, tmp_result[i][2]), 0)
+            
+        return tensor_features, tensor_labels, tensor_actions
+    
+    def thread_create_tensor_data(self, replay_memory, teacher_agent, student_agent, num_threads):
+        tmp_result = []
+        thread_args = self.gen_args(replay_memory, teacher_agent, student_agent, num_threads)
+        with Pool(processes=num_threads) as pool:
+            for result in pool.imap(self.create_tensor_data, thread_args):
+                tmp_result.append(result)
+        return self.combine_result(tmp_result)
+        
+    
+    def create_tensor_data(self, arg):
+        replay_memory, teacher_agent, student_agent = arg
         ## dataset is (state, action, reward, next_state)
         all_states, all_actions, all_rewards, all_next_states = [value for value in zip(*replay_memory)]
     
         onehot_states = list(map(to_one_hot, all_states))
         all_actions_indexes = list(map(flatten_action, all_actions))
         
-        tensor_labels = self.create_labels(all_rewards, all_next_states, teacher_agent)
+        tensor_labels = self.create_labels(all_rewards, all_next_states, teacher_agent, student_agent)
         tensor_features = torch.tensor(onehot_states).type(torch.float)
         tensor_actions = torch.tensor(all_actions_indexes).type(torch.int)
 
         return tensor_features, tensor_labels, tensor_actions
     
-    def create_labels(self, all_rewards, all_next_states, teacher_agent):
-        all_max_qvalues = list(map(teacher_agent.get_max_qvalue, all_next_states))
+    def create_labels(self, all_rewards, all_next_states, teacher_agent, student_agent):
+        all_actions = list(map(student_agent.best_move, all_next_states))
+        all_max_qvalues = list(map(teacher_agent.get_qvalue_by_action, all_next_states, all_actions))
         all_labels = list(map(lambda a, b: self.gamma * a + b, all_max_qvalues, all_rewards))
         return torch.tensor(all_labels).type(torch.float)
         
