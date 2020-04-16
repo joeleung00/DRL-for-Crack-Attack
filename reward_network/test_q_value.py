@@ -75,5 +75,5 @@ def multiple_games():
     
 
 if __name__ == "__main__":
-    play()
-    #multiple_games()
+    #play()
+    multiple_games()

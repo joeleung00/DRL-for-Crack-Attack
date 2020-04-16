@@ -18,7 +18,7 @@ COLUMN_DIM = Parameter.COLUMN_DIM
 torch.set_num_threads(15)
 
 TOTAL_EPOCH = 15
-PATH = "./network/n4.pth"
+PATH = "./network/test.pth"
 
 
 class Net(nn.Module):
@@ -70,7 +70,7 @@ if __name__ == "__main__":
     dl = dataloader("./output/0.9M_data", 64, seed=12)
     trainloader, testloader = dl.get_loader()
     
-    net = ResidualNet(NUM_OF_COLOR, ROW_DIM * COLUMN_DIM, 128, ROW_DIM * COLUMN_DIM)
+    net = ResidualNet(NUM_OF_COLOR, ROW_DIM * COLUMN_DIM, ROW_DIM * COLUMN_DIM, 128)
     #net.load_state_dict(torch.load(PATH))
     
     net.cuda()

@@ -2,14 +2,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import sys
 import argparse
 import numpy as np
 from tqdm import tqdm, trange
-sys.path.insert(1, "../Resnet/")
-from resnet import ResidualNet
+from dueling_net import ResidualNet
 from dataloader import DataLoader
 from utility import *
+#from eval_game import eval_game
 import os.path
 
 class DQNAgent:
@@ -137,3 +136,37 @@ class DQNAgent:
                 total += 1
 
         print("test loss: " + str(test_loss / total))
+        
+        
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='td learning.')
+   
+    
+    parser.add_argument('--input_network', type=str,
+                        help='path of the input network')
+    
+    parser.add_argument('--output_network', type=str, required=True,
+                        help='path of the output network')
+    
+    parser.add_argument('--learning_rate', type=float, required=True,
+                        help='learning_rate')
+    
+    parser.add_argument('--total_epoch', type=int, required=True,
+                        help='total epoch of trainig network')
+    
+    parser.add_argument('--batch_size', type=int, required=True,
+                        help='batch size when training network')
+    
+    parser.add_argument('--gamma', type=float, required=True,
+                        help='how important for future reward')
+
+    
+    args = parser.parse_args()
+    
+    
+    
+    teacher_agent = DQNAgent(args)
+    student_agent = DQNAgent(args)
+
+    student_agent.train(None, teacher_agent, student_agent)
+    eval_game(agent, 300)

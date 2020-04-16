@@ -5,14 +5,23 @@ import numpy as np
 import pickle
 from utility import *
 from torch.multiprocessing import Pool, Process
+import os.path
 class DataLoader:
     def __init__(self, batch_size, replay_memory, teacher_agent, student_agent, gamma, shuffle=True, split_ratio=0.05, seed=None):
         self.raw_data = replay_memory
         self.gamma = gamma
+#         if os.path.isfile("./100Mdata"):
+#             with open("./100Mdata", "rb") as fd:
+#                 tensor_data = pickle.load(fd)
+#         else:
+#             tensor_data = self.thread_create_tensor_data(replay_memory, teacher_agent, student_agent, 10)
+#             with open("./100Mdata", "wb") as fd:
+#                 pickle.dump(tensor_data, fd)
+                
         tensor_data = self.thread_create_tensor_data(replay_memory, teacher_agent, student_agent, 10)
-        features, labels, actions = tensor_data
+        features, labels, actions = tensor_data    
         self.tensor_data = Data.TensorDataset(features, labels, actions)
-        
+    
         self.data_size = len(self.tensor_data)
         self.batch_size = batch_size
         self.shuffle = shuffle

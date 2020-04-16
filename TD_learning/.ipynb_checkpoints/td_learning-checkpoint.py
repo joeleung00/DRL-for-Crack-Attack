@@ -14,8 +14,8 @@ from torch.multiprocessing import set_start_method
 
 
 ACTION_SIZE = ROW_DIM * COLUMN_DIM
-MAX_REPLAY_MEMORY_SIZE = 200000
-TRAINING_DATA_SIZE = 100000
+MAX_REPLAY_MEMORY_SIZE = 1000000
+TRAINING_DATA_SIZE = 500000
 observation_data = 0
 
 def init_game():
