@@ -53,6 +53,6 @@ def eval_mc_value_pg(agent, num, num_processes):
     
 if __name__ == "__main__":
     set_start_method('spawn')
-    agent = Agent(None, debug="./network/train3.pth")
+    agent = Agent(None, debug="./network/try2.pth")
     eval_policy(agent, 300)
-    eval_mc_value_pg(agent, 200, 5)
+    #eval_mc_value_pg(agent, 200, 5)
