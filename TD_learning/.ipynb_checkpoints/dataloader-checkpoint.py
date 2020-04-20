@@ -18,7 +18,8 @@ class DataLoader:
 #             with open("./100Mdata", "wb") as fd:
 #                 pickle.dump(tensor_data, fd)
                 
-        tensor_data = self.thread_create_tensor_data(replay_memory, teacher_agent, student_agent, 10)
+        #tensor_data = self.thread_create_tensor_data(replay_memory, teacher_agent, student_agent, 1)
+        tensor_data = self.create_tensor_data((replay_memory, teacher_agent, student_agent))
         features, labels, actions = tensor_data    
         self.tensor_data = Data.TensorDataset(features, labels, actions)
     
@@ -99,11 +100,13 @@ class DataLoader:
         replay_memory, teacher_agent, student_agent = arg
         ## dataset is (state, action, reward, next_state)
         all_states, all_actions, all_rewards, all_next_states = [value for value in zip(*replay_memory)]
-    
+        print("start create tensor")
         onehot_states = list(map(to_one_hot, all_states))
+        print("finish tensor states")
         all_actions_indexes = list(map(flatten_action, all_actions))
-        
+        print("finish actions")
         tensor_labels = self.create_labels(all_rewards, all_next_states, teacher_agent, student_agent)
+        print("finish labels")
         tensor_features = torch.tensor(onehot_states).type(torch.float)
         tensor_actions = torch.tensor(all_actions_indexes).type(torch.int)
 
