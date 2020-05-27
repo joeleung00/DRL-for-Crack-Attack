@@ -23,8 +23,7 @@ def save_train_data(data, path):
 def load_train_data(path):
     with open(path, "rb") as fd:
         return pickle.load(fd)
-    
-    
+
 def to_one_hot(board):
     if type(board) == list:
         board = np.array(board, dtype=np.int)

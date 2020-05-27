@@ -6,28 +6,28 @@ import pickle
 from utility import *
 from torch.multiprocessing import Pool, Process
 import os.path
+import ray
+ray.init()
 class DataLoader:
-    def __init__(self, batch_size, replay_memory, teacher_agent, student_agent, gamma, shuffle=True, split_ratio=0.05, seed=None):
+    def __init__(self, batch_size, replay_memory, shuffle=True, split_ratio=0.05, seed=None):
         self.raw_data = replay_memory
-        self.gamma = gamma
-#         if os.path.isfile("./100Mdata"):
-#             with open("./100Mdata", "rb") as fd:
+#         if os.path.isfile("./1Mdata"):
+#             with open("./1Mdata", "rb") as fd:
 #                 tensor_data = pickle.load(fd)
 #         else:
-#             tensor_data = self.thread_create_tensor_data(replay_memory, teacher_agent, student_agent, 10)
-#             with open("./100Mdata", "wb") as fd:
+#             tensor_data = self.create_tensor_data((replay_memory, teacher_agent, student_agent))
+#             with open("./1Mdata", "wb") as fd:
 #                 pickle.dump(tensor_data, fd)
-                
-        #tensor_data = self.thread_create_tensor_data(replay_memory, teacher_agent, student_agent, 1)
-        tensor_data = self.create_tensor_data((replay_memory, teacher_agent, student_agent))
-        features, labels, actions = tensor_data    
-        self.tensor_data = Data.TensorDataset(features, labels, actions)
-    
+#         for item in replay_memory:
+#             print(item)
+        tensor_data = self.create_tensor_data(replay_memory)
+        states, rewards, actions, next_states  = tensor_data
+        self.tensor_data = Data.TensorDataset(states, rewards, actions, next_states)
         self.data_size = len(self.tensor_data)
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.split_ratio = split_ratio
-        self.num_workers = 4
+        self.num_workers = 0
         self.seed = seed
         
         
@@ -66,62 +66,45 @@ class DataLoader:
         train_sampler = SubsetRandomSampler(train_indices)
         test_sampler = SubsetRandomSampler(val_indices)
         return train_sampler, test_sampler
+  
     
-    def gen_args(self, replay_memory, teacher_agent, student_agent, num_threads):
-        a = []
-        ave_workload = len(replay_memory) // num_threads + 1
-        for i in range(num_threads):
-            start = i * ave_workload
-            end = min((i + 1) * ave_workload, len(replay_memory))
-            a.append((replay_memory[start:end], teacher_agent, student_agent))
-        return a
-    
-    def combine_result(self, tmp_result):
-        tensor_features = tmp_result[0][0]
-        tensor_labels = tmp_result[0][1]
-        tensor_actions = tmp_result[0][2]
-        for i in range(1, len(tmp_result)):
-            tensor_features = torch.cat((tensor_features, tmp_result[i][0]), 0)
-            tensor_labels = torch.cat((tensor_labels, tmp_result[i][1]), 0)
-            tensor_actions = torch.cat((tensor_actions, tmp_result[i][2]), 0)
-            
-        return tensor_features, tensor_labels, tensor_actions
-    
-    def thread_create_tensor_data(self, replay_memory, teacher_agent, student_agent, num_threads):
-        tmp_result = []
-        thread_args = self.gen_args(replay_memory, teacher_agent, student_agent, num_threads)
-        with Pool(processes=num_threads) as pool:
-            for result in pool.imap(self.create_tensor_data, thread_args):
-                tmp_result.append(result)
-        return self.combine_result(tmp_result)
-        
-    
-    def create_tensor_data(self, arg):
-        replay_memory, teacher_agent, student_agent = arg
+    def create_tensor_data(self, replay_memory):
+
         ## dataset is (state, action, reward, next_state)
         all_states, all_actions, all_rewards, all_next_states = [value for value in zip(*replay_memory)]
-        print("start create tensor")
-        onehot_states = list(map(to_one_hot, all_states))
-        print("finish tensor states")
+        
+        #onehot_states = list(map(to_one_hot, all_states))
         all_actions_indexes = list(map(flatten_action, all_actions))
-        print("finish actions")
-        tensor_labels = self.create_labels(all_rewards, all_next_states, teacher_agent, student_agent)
-        print("finish labels")
-        tensor_features = torch.tensor(onehot_states).type(torch.float)
-        tensor_actions = torch.tensor(all_actions_indexes).type(torch.int)
+        #onehot_next_states = list(map(to_one_hot, all_next_states))
+        
+        features = [ray_to_one_hot.remote(state) for state in all_states]
+        onehot_states = ray.get(features)
+        features = [ray_to_one_hot.remote(state) for state in all_next_states]
+        onehot_next_states = ray.get(features)
+        
+        
+#         onehot_states = self.thread_fn(all_states, to_one_hot_batch, num_thread)
+#         all_actions_indexes = self.thread_fn(all_actions, flatten_action_batch, num_thread)
+        
+        tensor_rewards = torch.tensor(all_rewards).type(torch.float)
+        tensor_states = torch.tensor(onehot_states).type(torch.float)
+        tensor_actions = torch.tensor(all_actions_indexes).type(torch.long)
+        tensor_next_states = torch.tensor(onehot_next_states).type(torch.float)
 
-        return tensor_features, tensor_labels, tensor_actions
-    
-    def create_labels(self, all_rewards, all_next_states, teacher_agent, student_agent):
-        all_actions = list(map(student_agent.best_move, all_next_states))
-        all_max_qvalues = list(map(teacher_agent.get_qvalue_by_action, all_next_states, all_actions))
-        all_labels = list(map(lambda a, b: self.gamma * a + b, all_max_qvalues, all_rewards))
-        return torch.tensor(all_labels).type(torch.float)
-        
-    def flatten_label(self, onehot_board):
-        return onehot_board.flatten()
-        
-    
+        return tensor_states, tensor_rewards, tensor_actions, tensor_next_states
+@ray.remote
+def ray_to_one_hot(board):
+    if type(board) == list:
+        board = np.array(board, dtype=np.int)
+    onehot = np.zeros((NUM_OF_COLOR, ROW_DIM, COLUMN_DIM))
+    for row in range(ROW_DIM):
+        for col in range(COLUMN_DIM):
+            color = board[row, col]
+            if color == -1:
+                continue
+            onehot[color, row, col] = 1
+
+    return onehot
     
 if __name__ == "__main__":
     pass

@@ -27,14 +27,21 @@ def get_memory(replay_memory, agent, n = 10):
     
 def eval_game(agent, total_num_games):
     total_score = 0
+    score_list = []
     for i in range(total_num_games):
         score = play(agent)
         total_score += score
+        score_list.append(score)
         
     print("The average score after {} game: {}".format(total_num_games, total_score/total_num_games))
+
+    with open("./plot/double_q_alone.txt", "w") as fd:
+        for value in score_list:
+            fd.write(str(value) + "\n")
     
     
 if __name__ == "__main__":
-    agent = DQNAgent(None, debug="./network/dueling_try4.pth")
-    play(agent, show=True)
-    #eval_game(agent, 1000)
+    #agent = DQNAgent(None, debug="../SAC/network/test3/q_value_net2.path")
+    agent = DQNAgent(None, debug="./network/double_q_try3.pth")
+    #play(agent, show=True)
+    eval_game(agent, 1000)

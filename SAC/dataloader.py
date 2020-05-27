@@ -6,10 +6,11 @@ import pickle
 from utility import *
 from torch.multiprocessing import Pool, Process
 import os.path
+import ray
+ray.init()
 class DataLoader:
-    def __init__(self, batch_size, replay_memory, teacher_agent, student_agent, gamma, shuffle=True, split_ratio=0.05, seed=None):
+    def __init__(self, batch_size, replay_memory, shuffle=True, split_ratio=0.05, seed=None):
         self.raw_data = replay_memory
-        self.gamma = gamma
 #         if os.path.isfile("./1Mdata"):
 #             with open("./1Mdata", "rb") as fd:
 #                 tensor_data = pickle.load(fd)
@@ -19,10 +20,9 @@ class DataLoader:
 #                 pickle.dump(tensor_data, fd)
 #         for item in replay_memory:
 #             print(item)
-        tensor_data = self.create_tensor_data((replay_memory, teacher_agent, student_agent))
-        features, labels, actions = tensor_data
-        #print(tensor_data)
-        self.tensor_data = Data.TensorDataset(features, labels, actions)
+        tensor_data = self.create_tensor_data(replay_memory)
+        states, rewards, actions, next_states  = tensor_data
+        self.tensor_data = Data.TensorDataset(states, rewards, actions, next_states)
         self.data_size = len(self.tensor_data)
         self.batch_size = batch_size
         self.shuffle = shuffle
@@ -66,50 +66,45 @@ class DataLoader:
         train_sampler = SubsetRandomSampler(train_indices)
         test_sampler = SubsetRandomSampler(val_indices)
         return train_sampler, test_sampler
+  
     
-    def gen_args(self, data, num_threads):
-        a = []
-        ave_workload = len(data) // num_threads + 1
-        for i in range(num_threads):
-            start = i * ave_workload
-            end = min((i + 1) * ave_workload, len(data))
-            a.append(data[start:end])
-        return a
-    
-    
-    def thread_fn(self, data, fn, num_threads):
-        tmp_result = []
-        thread_args = self.gen_args(data, num_threads)
-        with Pool(processes=num_threads) as pool:
-            for result in pool.imap(fn, thread_args):
-                tmp_result.extend(result)
-        return tmp_result
-    
-    def create_tensor_data(self, arg):
-        num_thread = 20
-        replay_memory, teacher_agent, student_agent = arg
+    def create_tensor_data(self, replay_memory):
+
         ## dataset is (state, action, reward, next_state)
         all_states, all_actions, all_rewards, all_next_states = [value for value in zip(*replay_memory)]
-    
-        onehot_states = list(map(to_one_hot, all_states))
+        
+        #onehot_states = list(map(to_one_hot, all_states))
         all_actions_indexes = list(map(flatten_action, all_actions))
+        #onehot_next_states = list(map(to_one_hot, all_next_states))
+        
+        features = [ray_to_one_hot.remote(state) for state in all_states]
+        onehot_states = ray.get(features)
+        features = [ray_to_one_hot.remote(state) for state in all_next_states]
+        onehot_next_states = ray.get(features)
+        
+        
 #         onehot_states = self.thread_fn(all_states, to_one_hot_batch, num_thread)
 #         all_actions_indexes = self.thread_fn(all_actions, flatten_action_batch, num_thread)
         
-        tensor_labels = self.create_labels(all_rewards, all_next_states, teacher_agent, student_agent)
-        tensor_features = torch.tensor(onehot_states).type(torch.float)
+        tensor_rewards = torch.tensor(all_rewards).type(torch.float)
+        tensor_states = torch.tensor(onehot_states).type(torch.float)
         tensor_actions = torch.tensor(all_actions_indexes).type(torch.long)
+        tensor_next_states = torch.tensor(onehot_next_states).type(torch.float)
 
-        return tensor_features, tensor_labels, tensor_actions
-    
-    def create_labels(self, all_rewards, all_next_states, teacher_agent, student_agent):
-        all_actions = student_agent.best_move(all_next_states)
-        all_max_qvalues = teacher_agent.get_qvalue_by_action(all_next_states, all_actions).view(-1)
-        all_rewards = torch.tensor(all_rewards).cuda()
-        
-        return all_rewards + self.gamma * all_max_qvalues
-    
-        
+        return tensor_states, tensor_rewards, tensor_actions, tensor_next_states
+@ray.remote
+def ray_to_one_hot(board):
+    if type(board) == list:
+        board = np.array(board, dtype=np.int)
+    onehot = np.zeros((NUM_OF_COLOR, ROW_DIM, COLUMN_DIM))
+    for row in range(ROW_DIM):
+        for col in range(COLUMN_DIM):
+            color = board[row, col]
+            if color == -1:
+                continue
+            onehot[color, row, col] = 1
+
+    return onehot
     
 if __name__ == "__main__":
     pass

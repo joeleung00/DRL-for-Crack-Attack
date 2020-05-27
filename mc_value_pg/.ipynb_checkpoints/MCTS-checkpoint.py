@@ -188,7 +188,8 @@ class MCTS:
     
 if __name__ == "__main__":
     total_score = 0
-    total_game = 300
+    total_game = 1000
+    score_list = []
     for game in range(total_game):
         gameplay = Game(show=False)
         mcts = MCTS(gameplay.gameboard)
@@ -199,8 +200,13 @@ if __name__ == "__main__":
             #print("You have choosen : " + str(choice[0]) + " " + str(choice[1]))
             gameplay.input_pos(choice[0], choice[1])
         
+        score_list.append(gameplay.gameboard.score)
         total_score += gameplay.gameboard.score
     ave_score = total_score/total_game
     print(ave_score)
     print(ave_score/15)
+    
+    with open("./plot/mcts_alone.txt", "w") as fd:
+        for value in score_list:
+            fd.write(str(value) + "\n")
     

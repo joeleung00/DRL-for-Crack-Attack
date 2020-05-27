@@ -5,7 +5,12 @@ import torch.optim as optim
 import argparse
 import numpy as np
 from tqdm import tqdm, trange
-from dueling_net import ResidualNet
+####
+import sys
+sys.path.insert(1, "../Resnet")
+from resnet import ResidualNet
+#####
+#from dueling_net import ResidualNet
 from dataloader import DataLoader
 from utility import *
 #from eval_game import eval_game
@@ -14,17 +19,38 @@ import os.path
 class DQNAgent:
     def __init__(self, args, debug=False):
         self.net = ResidualNet(NUM_OF_COLOR, ROW_DIM * COLUMN_DIM, ROW_DIM * COLUMN_DIM, 128)
+        self.target_net = ResidualNet(NUM_OF_COLOR, ROW_DIM * COLUMN_DIM, ROW_DIM * COLUMN_DIM, 128)
         if debug:
             self.net.load_state_dict(torch.load(debug))
         else:
-            if args.input_network:
-                self.net.load_state_dict(torch.load(args.input_network))
+            if args != None:
+                self.args = args
+                if args.input_network:
+                    self.net.load_state_dict(torch.load(args.input_network))
+                    self.target_net.load_state_dict(torch.load(args.input_network))
+                    
+                self.epsilon = args.initial_epsilon
+                training_times = args.total_steps // args.train_freq
+                self.epsilon_decay = (args.initial_epsilon - args.final_epsilon) / training_times
+                self.optimizer = optim.Adam(self.net.parameters(), lr=self.args.q_lr)
         self.net.cuda()
-        self.args = args
+        self.target_net.cuda()
+        
+        self.criterion = nn.MSELoss()
+    
+    def update_epsilon(self):
+        self.epsilon -= self.epsilon_decay
+    
+    def update_target(self, soft_tau):
+        for target_param, param in zip(self.target_net.parameters(), self.net.parameters()):
+            target_param.data.copy_(
+                target_param.data * (1.0 - soft_tau) + param.data * soft_tau
+            )
         
         
-    def greedy_policy(self, board, possible_actions, epsilon):
-        if np.random.rand() <= epsilon:
+        
+    def greedy_policy(self, board, possible_actions):
+        if np.random.rand() <= self.epsilon:
             ## pick random action
             choice = np.random.randint(len(possible_actions))
             return possible_actions[choice]
@@ -75,42 +101,42 @@ class DQNAgent:
             new_outputs[i] = outputs[i][actions_indexes[i]]
         return new_outputs
     
-    def MSELoss(self, outputs, labels):
-        return torch.pow((outputs - labels), 2).mean()
-    
-    def train(self, replay_memory, teacher_agent, student_agent):
-        dataloader = DataLoader(self.args.batch_size, replay_memory, teacher_agent, student_agent, self.args.gamma)
-        train_loader, test_loader = dataloader.get_loader()
-            
-        total_loss = 0
-        optimizer = optim.SGD(self.net.parameters(), lr=self.args.learning_rate, momentum=0.7)
-        count_per_look = len(train_loader) // 10
+    def calculate_loss(self, states, rewards, actions, next_states):
+        with torch.no_grad():
+            _, next_states_best_moves = torch.max(self.net(next_states), 1)
+            next_states_q_valules = self.target_net(next_states)
+            next_states_q_valules = next_states_q_valules.gather(1, next_states_best_moves.unsqueeze(-1))
+            target_q_values = rewards.unsqueeze(-1) + self.args.gamma * next_states_q_valules
         
+        predicted_q_values = self.net(states).gather(1, actions.unsqueeze(-1))
+        loss = self.criterion(predicted_q_values, target_q_values)
+        return loss
+        
+        
+    def train(self, replay_memory):
+        dataloader = DataLoader(self.args.batch_size, replay_memory)
+        train_loader, test_loader = dataloader.get_loader()
+        
+        total_loss = 0
         pbar = tqdm(range(self.args.total_epoch), desc='Epoch', position=1)
         for epoch in pbar:
             train_iter = tqdm(train_loader, desc='Step', position=2)
             for step, data in enumerate(train_iter):
-                ## features is a onehot tensor board
-                ## labels is a int tensor
-                ## actions is a int tensor for action index
-                features, labels, actions = data
-                features = features.cuda()
-                labels = labels.cuda()
+                states, rewards, actions, next_states = data
+                states = states.cuda()
+                rewards = rewards.cuda()
                 actions = actions.cuda()
-                # zero the parameter gradients
-                optimizer.zero_grad()
-
-                outputs = self.net(features)
-                outputs = self.extract_q_values(outputs, actions)
-
-                loss = self.MSELoss(outputs, labels)
-                total_loss += loss.item()
+                next_states = next_states.cuda()
+                
+                loss = self.calculate_loss(states, rewards, actions, next_states)
+                
+                self.optimizer.zero_grad()
                 loss.backward()
-                optimizer.step()
-
-#                 if step % count_per_look == (count_per_look - 1):
-#                     print('[%d, %5d] loss: %.3f' % (epoch + 1, step + 1, total_loss / count_per_look))
-#                     total_loss = 0.0
+                self.optimizer.step()
+            
+                
+                total_loss += loss.item()
+                
             message = '[epoch %d] loss: %.3f' % (epoch + 1, total_loss / len(train_loader))
             pbar.write(message)                                     
             total_loss = 0.0
@@ -125,13 +151,13 @@ class DQNAgent:
         total = 0
         with torch.no_grad():
             for data in test_loader:
-                features, labels, actions = data
-                features = features.cuda()
-                labels = labels.cuda()
+                states, rewards, actions, next_states = data
+                states = states.cuda()
+                rewards = rewards.cuda()
                 actions = actions.cuda()
-                outputs = self.net(features)
-                outputs = self.extract_q_values(outputs, actions)
-                loss = self.MSELoss(outputs, labels)
+                next_states = next_states.cuda()
+                
+                loss = self.calculate_loss(states, rewards, actions, next_states)
                 test_loss += loss.item()
                 total += 1
 

@@ -1,7 +1,7 @@
 import sys
 sys.path.insert(1, '../game_simulation')
 from GameCLI import Game
-from agent import DQNAgent
+from policy_agent import PolicyAgent
 import copy
                 
 def play(agent, show=False):
@@ -9,7 +9,7 @@ def play(agent, show=False):
     state = game.gameboard.board
     #game.gameboard.print_board()
     while not game.termination():
-        choice = agent.best_move([game.gameboard.board], game.gameboard.get_available_choices())[0]
+        choice = agent.get_action(game.gameboard.board)
         game.input_pos(choice[0], choice[1])
     return game.gameboard.score
 
@@ -35,6 +35,6 @@ def eval_game(agent, total_num_games):
     
     
 if __name__ == "__main__":
-    agent = DQNAgent(None, debug="../TD_learning/network/dueling_try4.pth")
-    #play(agent, show=True)
-    eval_game(agent, 1000)
+    agent = PolicyAgent(None, debug="./network/try4/")
+    play(agent, show=True)
+    #eval_game(agent, 500)

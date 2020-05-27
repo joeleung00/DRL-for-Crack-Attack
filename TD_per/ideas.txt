@@ -1,0 +1,7 @@
+modules:
+1.train_net.py : tensor data -> trained network
+2.dataloader.py: raw board data -> tensor data
+3.td_learning.py: core algorithm of td learning
+4.eval_game.py: test the performance of the model
+
+

@@ -10,72 +10,70 @@ from eval_game import eval_game
 import copy
 import random
 from utility import *
-from torch.multiprocessing import set_start_method
-
+from torch.multiprocessing import set_start_method, Pool, Process
 
 ACTION_SIZE = ROW_DIM * COLUMN_DIM
-MAX_REPLAY_MEMORY_SIZE = 1000000
-TRAINING_DATA_SIZE = 500000
-observation_data = 0
+
+# output_path = "./plot/td_small_board.txt"
+# out_fd = open(output_path, "w")
 
 def init_game():
     game = Game(show=False)
     return game
 
-def td_learning(args):
-    set_start_method('spawn')
-    agent = DQNAgent(args)
-    pre_agent = DQNAgent(args)
-    teacher_agent = DQNAgent(args)
-    replay_memory = deque(maxlen = MAX_REPLAY_MEMORY_SIZE)
-    epsilon = args.initial_epsilon
-    epsilon_decay = (1.0 - args.final_epsilon) / args.total_iterations
-    
-    outer = tqdm(range(args.total_iterations), desc='Iteration', position=0) 
-    for epoch in outer:
-        game = init_game()
-        inner = tqdm(range(args.step_per_iteration), desc='Sampling', position=1)
-        for step in inner:
-            ##play and store batch
-            board = copy.deepcopy(game.gameboard.board)
-            choice = agent.greedy_policy(board, game.gameboard.get_available_choices(), epsilon)
-            next_board, reward = game.input_pos(choice[0], choice[1])
-            next_board = copy.deepcopy(next_board)
-            replay_memory.append((board, choice, reward, next_board))
-            if game.termination():
-                game = init_game()
-        
-        if len(replay_memory) >= observation_data:
-            pre_agent =  clone_agent(agent, pre_agent)
-            data_size = TRAINING_DATA_SIZE if len(replay_memory) >= TRAINING_DATA_SIZE else len(replay_memory)
-            agent.train(random.sample(replay_memory, data_size), teacher_agent, agent)
-            if epoch > 0:
-                teacher_agent = clone_agent(pre_agent, teacher_agent)
-    
-            eval_game(agent, 300)
 
-            if epsilon > args.final_epsilon:
-                epsilon -= epsilon_decay
-        
-        
-def clone_agent(src_agent, target_agent):
-    target_agent.net.load_state_dict(src_agent.net.state_dict())
-    return target_agent
+def td_learning(args):
+    agent = DQNAgent(args)
+    replay_memory = deque(maxlen = args.MAX_REPLAY_MEMORY_SIZE)
+    #eval_game(agent, 500)
+    outer = tqdm(range(args.total_steps), desc='Total steps', position=0)
+    game = init_game()
+    ave_score = 0
+    count = 0
+    for step in outer:
+        board = copy.deepcopy(game.gameboard.board)
+        if step < args.start_learn:
+            avail_choices = game.gameboard.get_available_choices()
+            index = np.random.randint(len(avail_choices))
+            choice = avail_choices[index]
+        else:
+            choice = agent.greedy_policy(board, game.gameboard.get_available_choices())
+            
+        next_board, reward = game.input_pos(choice[0], choice[1])
+        next_board = copy.deepcopy(next_board)
+        replay_memory.append((board, choice, reward, next_board))
+            
+        if game.termination():
+            ave_score += game.gameboard.score
+            count += 1
+            game = init_game()
+            
+        if step >= args.start_learn and step % args.train_freq == 0:
+            if count > 0:
+                message = "ave score of " + str(count) + " game: " + str(ave_score/count)
+                #out_fd.write("{} {}\n".format(step, ave_score/count))
+                outer.write(message)
+                ave_score = 0
+                count = 0
+            if step == args.start_learn:
+                if len(replay_memory) > 0:
+                    agent.train(replay_memory)
+            else:
+                agent.train(random.sample(replay_memory, args.train_data_size))
+            agent.update_target(args.soft_tau)
+            agent.update_epsilon()
+            
+      
+    eval_game(agent, 500)
 
 
 def main():
     parser = argparse.ArgumentParser(description='td learning.')
-    parser.add_argument('--total_iterations', type=int, required=True,
-                        help='total_iterations of playing + learning')
+    parser.add_argument('--total_steps', type=int, required=True,
+                        help='total steps of playing')
     
-    parser.add_argument('--step_per_iteration', type=int, required=True,
-                        help='step_per_iteration step is one move in game')
-    
-    parser.add_argument('--initial_epsilon', type=float, required=True,
-                        help='minimum epsilon')
-    
-    parser.add_argument('--final_epsilon', type=float, required=True,
-                        help='minimum epsilon')
+    parser.add_argument('--train_data_size', type=int, required=True,
+                        help='total steps of playing')
     
     parser.add_argument('--input_network', type=str,
                         help='path of the input network')
@@ -83,8 +81,15 @@ def main():
     parser.add_argument('--output_network', type=str, required=True,
                         help='path of the output network')
     
-    parser.add_argument('--learning_rate', type=float, required=True,
+    parser.add_argument('--q_lr', type=float, required=True,
                         help='learning_rate')
+
+    
+    parser.add_argument('--initial_epsilon', type=float, required=True,
+                        help='minimum epsilon')
+    
+    parser.add_argument('--final_epsilon', type=float, required=True,
+                        help='minimum epsilon')
     
     parser.add_argument('--total_epoch', type=int, required=True,
                         help='total epoch of trainig network')
@@ -94,6 +99,27 @@ def main():
     
     parser.add_argument('--gamma', type=float, required=True,
                         help='how important for future reward')
+
+    
+    parser.add_argument('--soft_tau', type=float, required=True,
+                        help='soft tau update network')
+    
+#     parser.add_argument('--NUM_OF_PROCESSES', type=int, required=True,
+#                         help='num of process')
+    
+    parser.add_argument('--start_learn', type=int, required=True,
+                        help='num of observation_data')
+    
+    parser.add_argument('--train_freq', type=int, required=True,
+                        help='train_freq')
+    
+#     parser.add_argument('--update_target_freq', type=int, required=True,
+#                         help='update_target_freq')
+    
+    parser.add_argument('--MAX_REPLAY_MEMORY_SIZE', type=int, required=True,
+                        help='MAX_REPLAY_MEMORY_SIZE')
+    
+
 
     
     args = parser.parse_args()
