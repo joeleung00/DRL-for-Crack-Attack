@@ -165,9 +165,7 @@ def default_policy(node):
 
 
 def expand(node):
-    """
-    输入一个节点，在该节点上拓展一个新的节点，使用random方法执行Action，返回新增的节点。注意，需要保证新增的节点与其他节点Action不同。
-    """
+ 
     child_node_state_set = set()
     for sub_node in node.child:
         child_node_state_set.add(sub_node.state.choice_id)
@@ -190,11 +188,7 @@ def expand(node):
 
 
 def best_child(node, is_exploration):
-  """
-  使用UCB算法，权衡exploration和exploitation后选择得分最高的子节点，注意如果是预测阶段直接选择当前Q值得分最高的。
-  """
 
-  # TODO: Use the min float value
   best_score = -sys.maxsize
   best_sub_node = None
 
@@ -219,22 +213,7 @@ def best_child(node, is_exploration):
   return best_sub_node
 
 
-# def backup(node, reward):
 
-#     # Update util the root node
-#     while node != None:
-#         #  Update the visit times
-#         node.visited_times += 1
-
-#         # Update the quality value
-#         #total_reward = reward + node.state.action_reward
-#         total_reward = reward
-#         if total_reward > node.quality_value:
-#             node.quality_value = total_reward
-
-#         reward = node.quality_value
-#         # Change the node to the parent node
-#         node = node.parent
 
 def backup(node, reward):
     while node != None:
